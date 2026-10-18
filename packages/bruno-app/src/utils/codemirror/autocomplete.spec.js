@@ -1,0 +1,1777 @@
+const { describe, it, expect, jest, beforeEach, afterEach } = require('@jest/globals');
+
+let _changeGeneration = 0;
+
+const _mockedCodemirror = {
+  commands: {},
+  getCursor: jest.fn(),
+  getLine: jest.fn(),
+  getRange: jest.fn(),
+  showHint: jest.fn(),
+  on: jest.fn(),
+  off: jest.fn(),
+  // Increments on every call so the keyup handler's "doc unchanged since last run" latch never trips.
+  changeGeneration: jest.fn(() => ++_changeGeneration),
+  // Runs the callback immediately, like CodeMirror does when no operation is already open.
+  operation: jest.fn((fn) => fn()),
+  state: {}
+};
+
+jest.mock('codemirror', () => {
+  return _mockedCodemirror;
+});
+
+// Import the functions to test
+import {
+  getAutoCompleteHints,
+  setupAutoComplete,
+  showRootHints,
+  extractNextSegmentSuggestions,
+  WORD_PATTERN,
+  buildSingleBraceInsertText,
+  truncateHintLabel
+} from './autocomplete';
+import { AUTOCOMPLETE_TRIGGER } from 'utils/common/constants';
+
+describe('Bruno Autocomplete', () => {
+  let mockedCodemirror;
+
+  beforeEach(() => {
+    mockedCodemirror = _mockedCodemirror;
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('getAutoCompleteHints', () => {
+    describe('Variable autocomplete', () => {
+      it('should provide variable hints when typing inside double curly braces', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 9 });
+        mockedCodemirror.getLine.mockReturnValue('{{envVar}}');
+        mockedCodemirror.getRange.mockReturnValue('{{envVar');
+        const allVariables = {
+          envVar1: 'value1',
+          envVar2: 'value2'
+        };
+
+        const result = getAutoCompleteHints(mockedCodemirror, allVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ text: 'envVar1', displayText: 'envVar1' }),
+            expect.objectContaining({ text: 'envVar2', displayText: 'envVar2' })
+          ])
+        );
+      });
+
+      it('should include mock data functions with $ prefix', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 9 });
+        mockedCodemirror.getRange.mockReturnValue('{{$randomI');
+
+        const result = getAutoCompleteHints(mockedCodemirror, {}, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result.list).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ displayText: '$randomInt' })
+          ])
+        );
+      });
+
+      it('should handle process environment variables', () => {
+        const allVariables = {
+          process: {
+            env: {
+              NODE_ENV: 'development',
+              API_URL: 'https://api.example.com'
+            }
+          }
+        };
+
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 14 });
+        mockedCodemirror.getRange.mockReturnValue('{{process.env.N');
+
+        const result = getAutoCompleteHints(mockedCodemirror, allVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ displayText: 'NODE_ENV' })
+          ])
+        );
+      });
+
+      it('should skip special internal keys', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 10 });
+        mockedCodemirror.getRange.mockReturnValue('{{path');
+
+        const allVariables = {
+          pathParams: { id: '123' },
+          maskedEnvVariables: { secret: '***' },
+          path: 'value'
+        };
+
+        const result = getAutoCompleteHints(mockedCodemirror, allVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ displayText: 'path' })
+          ])
+        );
+        expect(result.list).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ displayText: 'pathParams' })
+          ])
+        );
+      });
+
+      it('should handle nested object variables', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 12 });
+        mockedCodemirror.getRange.mockReturnValue('{{config.api.');
+
+        const allVariables = {
+          'config.api.url': 'https://echo.usebruno.com',
+          'config.api.client_id': 'client_id',
+          'config.api.client_secret': 'client_secret',
+          'config.app.name': 'bruno'
+        };
+
+        const result = getAutoCompleteHints(mockedCodemirror, allVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ displayText: 'url' }),
+            expect.objectContaining({ displayText: 'client_id' }),
+            expect.objectContaining({ displayText: 'client_secret' })
+          ])
+        );
+      });
+    });
+    describe('Trigger modes (variableAutocomplete)', () => {
+      const scopedVariables = [
+        { name: 'envVar', scope: 'environment' },
+        { name: 'requestVar', scope: 'request' }
+      ];
+
+      it('does not trigger on a bare `{` in DOUBLE_BRACE mode', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 4 });
+        mockedCodemirror.getLine.mockReturnValue('{env');
+        mockedCodemirror.getRange.mockReturnValue('{env');
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.DOUBLE_BRACE
+        });
+
+        expect(result).toBeNull();
+      });
+
+      it('opens the full hint list immediately on a bare `{` with nothing typed after it yet', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 1 });
+        mockedCodemirror.getLine.mockReturnValue('{');
+        mockedCodemirror.getRange.mockReturnValue('{');
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list.length).toBeGreaterThan(0);
+        expect(result.list).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ displayText: 'envVar', scope: 'environment' }),
+            expect.objectContaining({ displayText: 'requestVar', scope: 'request' })
+          ])
+        );
+      });
+
+      it('keeps the hint list open when the first `{` becomes `{{` (word still empty)', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 2 });
+        mockedCodemirror.getLine.mockReturnValue('{{');
+        mockedCodemirror.getRange.mockReturnValue('{{');
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list.length).toBeGreaterThan(0);
+        const envHint = result.list.find((hint) => hint.displayText === 'envVar');
+        expect(envHint).toBeTruthy();
+        expect(envHint.text).toBe('envVar}}');
+
+        const finalText = '{{'.slice(0, result.from.ch) + envHint.text + '{{'.slice(result.to.ch);
+        expect(finalText).toBe('{{envVar}}');
+      });
+
+      it('DOUBLE_BRACE opens the full list immediately at `{{`', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 2 });
+        mockedCodemirror.getLine.mockReturnValue('{{');
+        mockedCodemirror.getRange.mockReturnValue('{{');
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.DOUBLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ displayText: 'envVar' }),
+            expect.objectContaining({ displayText: 'requestVar' })
+          ])
+        );
+      });
+
+      it('DOUBLE_BRACE still completes `{{` + letters', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 5 });
+        mockedCodemirror.getLine.mockReturnValue('{{env');
+        mockedCodemirror.getRange.mockReturnValue('{{env');
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.DOUBLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining([expect.objectContaining({ displayText: 'envVar' })])
+        );
+      });
+
+      it('falls back to DOUBLE_BRACE when no mode is passed (opens at `{{`, not at `{`)', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 2 });
+        mockedCodemirror.getLine.mockReturnValue('{{');
+        mockedCodemirror.getRange.mockReturnValue('{{');
+
+        const doubleResult = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables']
+        });
+        expect(doubleResult).toBeTruthy();
+        expect(doubleResult.list.length).toBeGreaterThan(0);
+
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 1 });
+        mockedCodemirror.getLine.mockReturnValue('{');
+        mockedCodemirror.getRange.mockReturnValue('{');
+
+        const singleResult = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables']
+        });
+        expect(singleResult).toBeNull();
+      });
+
+      it('SINGLE_BRACE also opens at `{{` + letters', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 5 });
+        mockedCodemirror.getLine.mockReturnValue('{{env');
+        mockedCodemirror.getRange.mockReturnValue('{{env');
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+      });
+
+      it('OFF never opens the variable list while typing', () => {
+        [['{', 1], ['{{', 2], ['{{env', 5]].forEach(([line, ch]) => {
+          mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch });
+          mockedCodemirror.getLine.mockReturnValue(line);
+          mockedCodemirror.getRange.mockReturnValue(line);
+
+          const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+            showHintsFor: ['variables'],
+            variableAutocomplete: AUTOCOMPLETE_TRIGGER.OFF
+          });
+
+          expect(result).toBeNull();
+        });
+      });
+
+      it('stops reopening once a third (or later) `{` is typed past a valid `{{`', () => {
+        ['{{{', '{{{{'].forEach((line) => {
+          mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: line.length });
+          mockedCodemirror.getLine.mockReturnValue(line);
+          mockedCodemirror.getRange.mockReturnValue(line);
+
+          const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+            showHintsFor: ['variables'],
+            variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+          });
+
+          expect(result).toBeNull();
+        });
+      });
+
+      it('still filters normally when a real word follows stray extra braces (e.g. `{{{env`)', () => {
+        const line = '{{{env';
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: line.length });
+        mockedCodemirror.getLine.mockReturnValue(line);
+        mockedCodemirror.getRange.mockReturnValue(line);
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        const envHint = result.list.find((hint) => hint.displayText === 'envVar');
+        expect(envHint).toBeTruthy();
+      });
+
+      it('does not duplicate closing braces already present (e.g. autoCloseBrackets-inserted `{{|}}`)', () => {
+        const line = '{{}}';
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 2 });
+        mockedCodemirror.getLine.mockReturnValue(line);
+        mockedCodemirror.getRange.mockReturnValue('{{');
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        const envHint = result.list.find((hint) => hint.displayText === 'envVar');
+        expect(envHint).toBeTruthy();
+
+        const finalText = line.slice(0, result.from.ch) + envHint.text + line.slice(result.to.ch);
+        expect(finalText).toBe('{{envVar}}');
+      });
+
+      it('triggers on a bare `{` and re-emits a clean `{{name}}` when applied', () => {
+        const line = '{';
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 1 });
+        mockedCodemirror.getLine.mockReturnValue(line);
+        mockedCodemirror.getRange.mockReturnValue(line);
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        const envHint = result.list.find((hint) => hint.displayText === 'envVar');
+        expect(envHint).toBeTruthy();
+        expect(envHint.scope).toBe('environment');
+
+        // The existing `{` is left in place (from/to both collapse to the cursor, right after
+        // it), so combining the untouched prefix/suffix with the hint's insert text must
+        // reproduce a clean pair.
+        const finalText = line.slice(0, result.from.ch) + envHint.text + line.slice(result.to.ch);
+        expect(finalText).toBe('{{envVar}}');
+      });
+
+      it('does not re-match (and so does not reopen) once a regular character follows the `{`', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 2 });
+        mockedCodemirror.getLine.mockReturnValue('{a');
+        mockedCodemirror.getRange.mockReturnValue('{a');
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeNull();
+      });
+
+      it('does not duplicate an already-typed closing brace (cursor lands right after `{` with a `}` already following)', () => {
+        const line = '{}';
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 1 });
+        mockedCodemirror.getLine.mockReturnValue(line);
+        mockedCodemirror.getRange.mockReturnValue('{');
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        const envHint = result.list.find((hint) => hint.displayText === 'envVar');
+        expect(envHint).toBeTruthy();
+
+        const finalText = line.slice(0, result.from.ch) + envHint.text + line.slice(result.to.ch);
+        expect(finalText).toBe('{{envVar}}');
+      });
+
+      it('does not affect existing double-brace `{{` completion behavior', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 5 });
+        mockedCodemirror.getLine.mockReturnValue('{{env}}');
+        mockedCodemirror.getRange.mockReturnValue('{{env');
+
+        const result = getAutoCompleteHints(mockedCodemirror, scopedVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        const envHint = result.list.find((hint) => hint.displayText === 'envVar');
+        expect(envHint).toBeTruthy();
+        // Plain text, not brace-wrapped, since the user already typed the full `{{` pair.
+        expect(envHint.text).toBe('envVar');
+      });
+
+      it('gives an unscoped process.env drill-down prefix the process.env icon, on the double-brace path too', () => {
+        const partialVariables = [{ name: 'process.env.FOO', scope: 'process.env' }];
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 2 });
+        mockedCodemirror.getLine.mockReturnValue('{{}}');
+        mockedCodemirror.getRange.mockReturnValue('{{');
+
+        const result = getAutoCompleteHints(mockedCodemirror, partialVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        const processHint = result.list.find((hint) => hint.displayText === 'process');
+        expect(processHint).toBeTruthy();
+        expect(processHint.text).toBe('process');
+        expect(processHint.scope).toBe('process.env');
+        expect(processHint.render).toBeTruthy();
+      });
+
+      it('does not close braces on `{{process`, so the user can keep drilling into process.env', () => {
+        const partialVariables = [{ name: 'process.env.FOO', scope: 'process.env' }];
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 9 });
+        mockedCodemirror.getLine.mockReturnValue('{{process');
+        mockedCodemirror.getRange.mockReturnValue('{{process');
+
+        const result = getAutoCompleteHints(mockedCodemirror, partialVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        const processHint = result.list.find((hint) => hint.displayText === 'process');
+        expect(processHint).toBeTruthy();
+        expect(processHint.text).toBe('process');
+      });
+
+      it('completes a drilled-down process.env leaf with its scope icon and closing braces', () => {
+        const partialVariables = [{ name: 'process.env.FOO', scope: 'process.env' }];
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 14 });
+        mockedCodemirror.getLine.mockReturnValue('{{process.env.');
+        mockedCodemirror.getRange.mockReturnValue('{{process.env.');
+
+        const result = getAutoCompleteHints(mockedCodemirror, partialVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        const leaf = result.list.find((hint) => hint.displayText === 'FOO');
+        expect(leaf).toBeTruthy();
+        expect(leaf.text).toBe('FOO}}');
+        expect(leaf.scope).toBe('process.env');
+        expect(leaf.render).toBeTruthy();
+      });
+
+      it('does not duplicate existing closing braces when completing a process.env leaf', () => {
+        const partialVariables = [{ name: 'process.env.FOO', scope: 'process.env' }];
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 14 });
+        mockedCodemirror.getLine.mockReturnValue('{{process.env.}}');
+        mockedCodemirror.getRange.mockReturnValue('{{process.env.');
+
+        const result = getAutoCompleteHints(mockedCodemirror, partialVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        const leaf = result.list.find((hint) => hint.displayText === 'FOO');
+        expect(leaf.text).toBe('FOO');
+      });
+
+      it('re-forms the `{{` pair, with no closing braces, for an unscoped/intermediate dotted-path segment', () => {
+        const partialVariables = [{ name: 'process.env.FOO', scope: 'process.env' }];
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 1 });
+        mockedCodemirror.getLine.mockReturnValue('{');
+        mockedCodemirror.getRange.mockReturnValue('{');
+
+        const result = getAutoCompleteHints(mockedCodemirror, partialVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        const processHint = result.list.find((hint) => hint.displayText === 'process');
+        expect(processHint).toBeTruthy();
+        expect(processHint.text).toBe('{process');
+        expect(processHint.scope).toBe('process.env');
+        expect(processHint.render).toBeTruthy();
+      });
+
+      it('offers a scoped variable whose name contains a literal dot as one complete hint, not truncated to its first segment', () => {
+        const partialVariables = [{ name: 'api.host', scope: 'collection' }];
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 1 });
+        mockedCodemirror.getLine.mockReturnValue('{');
+        mockedCodemirror.getRange.mockReturnValue('{');
+
+        const result = getAutoCompleteHints(mockedCodemirror, partialVariables, [], {
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.SINGLE_BRACE
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list.find((hint) => hint.displayText === 'api')).toBeFalsy();
+
+        const apiHostHint = result.list.find((hint) => hint.displayText === 'api.host');
+        expect(apiHostHint).toBeTruthy();
+        expect(apiHostHint.scope).toBe('collection');
+        expect(apiHostHint.text).toBe('{api.host}}');
+      });
+
+      it('does not duplicate the typed prefix when completing an atomic dotted variable inside `{{`', () => {
+        const partialVariables = [{ name: 'api.host', scope: 'collection' }];
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 6 });
+        mockedCodemirror.getLine.mockReturnValue('{{api.');
+        mockedCodemirror.getRange.mockReturnValue('{{api.');
+
+        const result = getAutoCompleteHints(mockedCodemirror, partialVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+
+        const apiHostHint = result.list.find((hint) => hint.displayText === 'api.host');
+        expect(apiHostHint).toBeTruthy();
+        expect(apiHostHint.scope).toBe('collection');
+        expect(result.from).toEqual({ line: 0, ch: 6 });
+        expect(result.to).toEqual({ line: 0, ch: 6 });
+        expect(apiHostHint.from).toEqual({ line: 0, ch: 2 });
+        expect(apiHostHint.to).toEqual({ line: 0, ch: 6 });
+        expect(apiHostHint.text).toBe('api.host}}');
+      });
+
+      it('replaces just the typed word (no widening beyond it) for a non-dotted substring match on an atomic dotted variable', () => {
+        const partialVariables = [{ name: 'api.host', scope: 'collection' }];
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 6 });
+        mockedCodemirror.getLine.mockReturnValue('{{host');
+        mockedCodemirror.getRange.mockReturnValue('{{host');
+
+        const result = getAutoCompleteHints(mockedCodemirror, partialVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+
+        const apiHostHint = result.list.find((hint) => hint.displayText === 'api.host');
+        expect(apiHostHint).toBeTruthy();
+        expect(apiHostHint.from).toEqual({ line: 0, ch: 2 });
+        expect(apiHostHint.to).toEqual({ line: 0, ch: 6 });
+        expect(apiHostHint.text).toBe('api.host}}');
+      });
+
+      it('replaces the whole typed word for a substring match whose typed word contains a dot', () => {
+        const partialVariables = [{ name: 'my.api.host', scope: 'collection' }];
+        const line = '{{api.h';
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 7 });
+        mockedCodemirror.getLine.mockReturnValue(line);
+        mockedCodemirror.getRange.mockReturnValue(line);
+
+        const result = getAutoCompleteHints(mockedCodemirror, partialVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        const hint = result.list.find((h) => h.displayText === 'my.api.host');
+        expect(hint).toBeTruthy();
+
+        const finalText = line.slice(0, hint.from.ch) + hint.text + line.slice(hint.to.ch);
+        expect(finalText).toBe('{{my.api.host}}');
+      });
+
+      describe('cursor in the middle of an existing name', () => {
+        const pickMyApiHost = (line, cursorCh) => {
+          mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: cursorCh });
+          mockedCodemirror.getLine.mockReturnValue(line);
+          mockedCodemirror.getRange.mockReturnValue(line.slice(0, cursorCh));
+
+          const result = getAutoCompleteHints(mockedCodemirror, [{ name: 'my.api.host', scope: 'collection' }], [], {
+            showHintsFor: ['variables']
+          });
+          const hint = result.list.find((h) => h.displayText === 'my.api.host');
+          return line.slice(0, hint.from.ch) + hint.text + line.slice(hint.to.ch);
+        };
+
+        it('does not leave the rest of the name behind (`{{my.ap|i.host}}`)', () => {
+          expect(pickMyApiHost('{{my.api.host}}', 7)).toBe('{{my.api.host}}');
+        });
+
+        it('still adds the closing braces when none follow the name (`{{my.ap|i.host`)', () => {
+          expect(pickMyApiHost('{{my.api.host', 7)).toBe('{{my.api.host}}');
+        });
+
+        it('keeps text that follows the name (`{{my.ap|i.host}}/path`)', () => {
+          expect(pickMyApiHost('{{my.api.host}}/path', 7)).toBe('{{my.api.host}}/path');
+        });
+
+        it('replaces the existing name when `{{` was just typed in front of it (`{{|api.host}}`)', () => {
+          const pick = (line, cursorCh, mode) => {
+            mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: cursorCh });
+            mockedCodemirror.getLine.mockReturnValue(line);
+            mockedCodemirror.getRange.mockReturnValue(line.slice(0, cursorCh));
+
+            const result = getAutoCompleteHints(mockedCodemirror, [{ name: 'userId', scope: 'collection' }], [], {
+              showHintsFor: ['variables'],
+              variableAutocomplete: mode
+            });
+            const hint = result.list.find((h) => h.displayText === 'userId');
+            const from = hint.from || result.from;
+            const to = hint.to || result.to;
+            return line.slice(0, from.ch) + hint.text + line.slice(to.ch);
+          };
+
+          [AUTOCOMPLETE_TRIGGER.SINGLE_BRACE, AUTOCOMPLETE_TRIGGER.DOUBLE_BRACE].forEach((mode) => {
+            expect(pick('{{api.host}}', 2, mode)).toBe('{{userId}}');
+            expect(pick('{{api.host}}/path', 2, mode)).toBe('{{userId}}/path');
+            expect(pick('{{api.host', 2, mode)).toBe('{{userId}}');
+            // nothing after the caret: unchanged behaviour
+            expect(pick('{{', 2, mode)).toBe('{{userId}}');
+          });
+        });
+      });
+
+      it('replaces the whole typed word when a substring match picks a process.env variable (`{{env.`)', () => {
+        const partialVariables = [{ name: 'process.env.FOO', scope: 'process.env' }];
+        const line = '{{env.';
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 6 });
+        mockedCodemirror.getLine.mockReturnValue(line);
+        mockedCodemirror.getRange.mockReturnValue(line);
+
+        const result = getAutoCompleteHints(mockedCodemirror, partialVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        const hint = result.list.find((h) => h.displayText === 'process.env.FOO');
+        expect(hint).toBeTruthy();
+
+        const finalText = line.slice(0, hint.from.ch) + hint.text + line.slice(hint.to.ch);
+        expect(finalText).toBe('{{process.env.FOO}}');
+      });
+    });
+
+    describe('API object context (req, res, bru)', () => {
+      const testCases = [
+        {
+          name: 'req object',
+          input: 'req.',
+          expected: ['url', 'method', 'headers', 'body', 'timeout']
+        },
+        {
+          name: 'res object',
+          input: 'res.',
+          expected: ['status', 'statusText', 'headers', 'body', 'responseTime']
+        },
+        {
+          name: 'bru object',
+          input: 'bru.',
+          expected: ['cwd()', 'getEnvName()', 'getProcessEnv(key)', 'hasEnvVar(key)', 'getEnvVar(key)']
+        }
+      ];
+
+      testCases.forEach(({ name, input, expected }) => {
+        it(`should provide ${name} hints`, () => {
+          mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: input.length });
+          mockedCodemirror.getLine.mockReturnValue(input);
+          mockedCodemirror.getRange.mockReturnValue(input);
+
+          const result = getAutoCompleteHints(mockedCodemirror, {}, [], {
+            showHintsFor: ['req', 'res', 'bru']
+          });
+
+          expect(result).toBeTruthy();
+          expect(result.list).toEqual(expect.arrayContaining(expected));
+        });
+      });
+
+      // The API token must be isolated from the surrounding code so the right
+      // context is detected — regression guard for the WORD_PATTERN range bug,
+      // where `( , + ...` glued the preceding code onto the token.
+      const embeddedCases = [
+        { name: 'bru inside a function call', line: 'console.log(bru.get', expected: ['getEnvVar(key)', 'getAllEnvVars()'] },
+        { name: 'bru after an assignment', line: 'const value = bru.get', expected: ['getEnvVar(key)', 'getAllEnvVars()'] },
+        { name: 'bru as an argument after a comma', line: 'fn(arg,bru.get', expected: ['getEnvVar(key)', 'getAllEnvVars()'] },
+        { name: 'req inside a function call', line: 'console.log(req.get', expected: ['getUrl()', 'getHeaders()'] },
+        { name: 'res after a return', line: 'return res.get', expected: ['getStatus()', 'getBody()'] }
+      ];
+
+      embeddedCases.forEach(({ name, line, expected }) => {
+        it(`should provide hints for ${name}`, () => {
+          mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: line.length });
+          mockedCodemirror.getLine.mockReturnValue(line);
+          mockedCodemirror.getRange.mockReturnValue(line);
+
+          const result = getAutoCompleteHints(mockedCodemirror, {}, [], {
+            showHintsFor: ['req', 'res', 'bru']
+          });
+
+          expect(result).toBeTruthy();
+          expect(result.list).toEqual(expect.arrayContaining(expected));
+        });
+      });
+
+      it('should provide method hints for nested req objects', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 7 });
+        mockedCodemirror.getLine.mockReturnValue('req.get');
+        mockedCodemirror.getRange.mockReturnValue('req.get');
+
+        const result = getAutoCompleteHints(mockedCodemirror, {}, [], {
+          showHintsFor: ['req']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining([
+            'getUrl()',
+            'getMethod()',
+            'getAuthMode()',
+            'getHeader(name)',
+            'getHeaders()',
+            'getBody()',
+            'getTimeout()',
+            'getExecutionMode()',
+            'getName()'
+          ])
+        );
+      });
+
+      it('should handle bru.runner sub-object', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 11 });
+        mockedCodemirror.getLine.mockReturnValue('bru.runner.');
+        mockedCodemirror.getRange.mockReturnValue('bru.runner.');
+
+        const result = getAutoCompleteHints(mockedCodemirror, {}, [], {
+          showHintsFor: ['bru']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining([
+            'setNextRequest(requestName)',
+            'skipRequest()',
+            'stopExecution()'
+          ])
+        );
+      });
+    });
+
+    describe('gRPC hook context', () => {
+      // gRPC hooks have no `req` / `res`; everything hangs off `bru.grpc`, and each hook is
+      // handed a different subset of it — so the hints are grouped per hook, not per root.
+      const hintsFor = (line, showHintsFor) => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: line.length });
+        mockedCodemirror.getLine.mockReturnValue(line);
+        mockedCodemirror.getRange.mockReturnValue(line);
+
+        return getAutoCompleteHints(mockedCodemirror, {}, [], { showHintsFor });
+      };
+
+      const grpcHints = (line, hook) => hintsFor(line, ['bru', `grpc:${hook}`]);
+
+      it('offers only the request model before the call has produced a response', () => {
+        const result = grpcHints('bru.grpc.', 'before-call-start');
+
+        expect(result.list).toEqual(['request']);
+      });
+
+      it('offers both models once a message has been received', () => {
+        const result = grpcHints('bru.grpc.', 'after-message-receive');
+
+        expect(result.list).toEqual(expect.arrayContaining(['request', 'response']));
+      });
+
+      it('offers the metadata write methods only in before-call-start', () => {
+        const writable = grpcHints('bru.grpc.request.metadata.', 'before-call-start');
+        const readOnly = grpcHints('bru.grpc.request.metadata.', 'after-call-end');
+
+        expect(writable.list).toEqual(expect.arrayContaining(['get(key)', 'upsert(key, value)', 'clear()']));
+        expect(readOnly.list).toEqual(expect.arrayContaining(['get(key)']));
+        expect(readOnly.list).not.toEqual(expect.arrayContaining(['upsert(key, value)']));
+      });
+
+      it('offers request.message only in before-message-send', () => {
+        expect(grpcHints('bru.grpc.request.', 'before-message-send').list).toContain('message');
+        expect(grpcHints('bru.grpc.request.', 'before-call-start').list).not.toContain('message');
+      });
+
+      it('offers response.message only in after-message-receive', () => {
+        expect(grpcHints('bru.grpc.response.', 'after-message-receive').list).toContain('message');
+
+        const afterCallEnd = grpcHints('bru.grpc.response.', 'after-call-end');
+        expect(afterCallEnd.list).toContain('statusCode');
+        expect(afterCallEnd.list).not.toContain('message');
+      });
+
+      it('does not leak gRPC hints into an HTTP script editor', () => {
+        expect(hintsFor('bru.grpc.', ['req', 'res', 'bru'])).toBeNull();
+      });
+
+      it('does not leak HTTP globals into a gRPC hook', () => {
+        expect(grpcHints('req.', 'before-call-start')).toBeNull();
+        expect(grpcHints('res.', 'after-call-end')).toBeNull();
+      });
+    });
+
+    describe('Custom hints and anyword context', () => {
+      it('should provide custom anyword hints', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 7 });
+        mockedCodemirror.getLine.mockReturnValue('Content-');
+        mockedCodemirror.getRange.mockReturnValue('Content-');
+
+        const customHints = ['Content-Type', 'Content-Encoding', 'Content-Length'];
+
+        const result = getAutoCompleteHints(mockedCodemirror, {}, customHints, {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining(['Content-Type', 'Content-Encoding', 'Content-Length'])
+        );
+      });
+
+      it('should handle progressive hints for custom hints', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 6 });
+        mockedCodemirror.getLine.mockReturnValue('utils.');
+        mockedCodemirror.getRange.mockReturnValue('utils.');
+
+        const customHints = ['utils.string.trim', 'utils.string.capitalize', 'utils.array.map'];
+
+        const result = getAutoCompleteHints(mockedCodemirror, {}, customHints, {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining(['string', 'array'])
+        );
+      });
+    });
+
+    describe('Filtering and options', () => {
+      beforeEach(() => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 4 });
+        mockedCodemirror.getLine.mockReturnValue('req.');
+        mockedCodemirror.getRange.mockReturnValue('req.');
+      });
+
+      it('should respect showHintsFor option for excluding hints', () => {
+        const options = { showHintsFor: ['res', 'bru'] };
+        const result = getAutoCompleteHints(mockedCodemirror, {}, [], options);
+
+        expect(result).toBeNull();
+      });
+
+      it('should show hints when included in showHintsFor', () => {
+        const options = { showHintsFor: ['req'] };
+        const result = getAutoCompleteHints(mockedCodemirror, {}, [], options);
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining(['url', 'method'])
+        );
+      });
+
+      it('should filter variables based on showHintsFor', () => {
+        mockedCodemirror.getLine.mockReturnValue('{{varNa}}');
+        mockedCodemirror.getRange.mockReturnValue('{{varNa');
+
+        const allVariables = { envVar1: 'value1' };
+        const options = { showHintsFor: ['req', 'res', 'bru'] };
+
+        const result = getAutoCompleteHints(mockedCodemirror, allVariables, [], options);
+
+        expect(result).toBeNull();
+      });
+
+      it('should limit results to 50 hints', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 10 });
+        mockedCodemirror.getLine.mockReturnValue('{{varName}}');
+        mockedCodemirror.getRange.mockReturnValue('{{v');
+
+        const allVariables = {};
+        for (let i = 0; i < 100; i++) {
+          allVariables[`var${i}`] = `value${i}`;
+        }
+
+        const result = getAutoCompleteHints(mockedCodemirror, allVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list.length).toBeLessThanOrEqual(50);
+      });
+
+      it('should sort hints alphabetically', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 10 });
+        mockedCodemirror.getLine.mockReturnValue('{{v.');
+        mockedCodemirror.getRange.mockReturnValue('{{v.');
+
+        const allVariables = {
+          'v.zebra': 'value1',
+          'v.apple': 'value2',
+          'v.banana': 'value3'
+        };
+
+        const result = getAutoCompleteHints(mockedCodemirror, allVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        const displayTexts = result.list.map((item) =>
+          typeof item === 'object' ? item.displayText : item
+        );
+
+        const userVars = displayTexts.filter((text) => !text.startsWith('$'));
+        expect(userVars).toEqual(['apple', 'banana', 'zebra']);
+      });
+    });
+
+    describe('Edge cases', () => {
+      it('should return null when no word is found at cursor', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 0 });
+        mockedCodemirror.getLine.mockReturnValue('   ');
+        mockedCodemirror.getRange.mockReturnValue('');
+
+        const result = getAutoCompleteHints(mockedCodemirror, {}, []);
+
+        expect(result).toBeNull();
+      });
+
+      it('should handle empty or null variables', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 10 });
+        mockedCodemirror.getLine.mockReturnValue('{{varName}}');
+        mockedCodemirror.getRange.mockReturnValue('{{varName');
+
+        const emptyResult = getAutoCompleteHints(mockedCodemirror, {}, []);
+        const nullResult = getAutoCompleteHints(mockedCodemirror, null, []);
+
+        expect(emptyResult).toBeNull();
+        expect(nullResult).toBeNull();
+      });
+
+      it('should handle cursor at end of line', () => {
+        const line = 'req.getHea';
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: line.length });
+        mockedCodemirror.getLine.mockReturnValue(line);
+        mockedCodemirror.getRange.mockReturnValue(line);
+
+        const result = getAutoCompleteHints(mockedCodemirror, {}, [], {
+          showHintsFor: ['req']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining(['getHeader(name)', 'getHeaders()'])
+        );
+      });
+
+      it('should provide deleteHeader and deleteHeaders hints for req.delete prefix', () => {
+        const line = 'req.delete';
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: line.length });
+        mockedCodemirror.getLine.mockReturnValue(line);
+        mockedCodemirror.getRange.mockReturnValue(line);
+
+        const result = getAutoCompleteHints(mockedCodemirror, {}, [], {
+          showHintsFor: ['req']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list).toEqual(
+          expect.arrayContaining(['deleteHeader(name)', 'deleteHeaders(data)'])
+        );
+      });
+
+      it('should handle case-insensitive matching', () => {
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 10 });
+        mockedCodemirror.getLine.mockReturnValue('{{varName}}');
+        mockedCodemirror.getRange.mockReturnValue('{{var');
+
+        const allVariables = {
+          variable1: 'value1',
+          Variable2: 'value2',
+          VARIABLE3: 'value3'
+        };
+
+        const result = getAutoCompleteHints(mockedCodemirror, allVariables, [], {
+          showHintsFor: ['variables']
+        });
+
+        expect(result).toBeTruthy();
+        expect(result.list.length).toBe(3);
+      });
+    });
+  });
+
+  describe('showRootHints', () => {
+    const rootHintsFor = (showHintsFor) => {
+      mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 0 });
+      mockedCodemirror.getLine.mockReturnValue('');
+      mockedCodemirror.getRange.mockReturnValue('');
+
+      const shown = showRootHints(mockedCodemirror, showHintsFor);
+      const list = shown ? mockedCodemirror.showHint.mock.calls[0][0].hint().list : null;
+
+      return { shown, list };
+    };
+
+    it('offers the globals of the requested groups', () => {
+      expect(rootHintsFor(['req', 'bru']).list).toEqual(['bru', 'req']);
+    });
+
+    // The gRPC groups are keyed by hook, but every entry hangs off `bru` — the root list must
+    // report the global, never the group key.
+    it('offers bru for the gRPC hook groups', () => {
+      expect(rootHintsFor(['bru', 'grpc:after-message-receive']).list).toEqual(['bru']);
+    });
+
+    it('shows nothing when no group is requested', () => {
+      expect(rootHintsFor(['variables']).shown).toBe(false);
+    });
+  });
+
+  describe('WORD_PATTERN', () => {
+    it('matches token characters (word chars, . $ / -) and nothing else', () => {
+      const matching = [...'abcXYZ0189_', '.', '$', '/', '-'];
+      const nonMatching = [...'()%&\'*+,', ' ', '\t', '{', '}', '[', ']', '=', '@', '#', '!'];
+
+      matching.forEach((ch) => expect(WORD_PATTERN.test(ch)).toBe(true));
+      nonMatching.forEach((ch) => expect(WORD_PATTERN.test(ch)).toBe(false));
+    });
+  });
+
+  describe('extractNextSegmentSuggestions', () => {
+    describe('prefix matching', () => {
+      it('should extract the current segment for a partial prefix match', () => {
+        const hints = ['req.getUrl()', 'req.getMethod()', 'req.setUrl(url)'];
+        const result = extractNextSegmentSuggestions(hints, 'req.get');
+
+        expect(result).toEqual(['getMethod()', 'getUrl()']);
+      });
+
+      it('should return the next segment after a trailing dot', () => {
+        const hints = ['bru.cookies.jar()', 'bru.runner.skipRequest()'];
+        const result = extractNextSegmentSuggestions(hints, 'bru.');
+
+        expect(result).toEqual(['cookies', 'runner']);
+      });
+
+      it('should return the last segment on exact match', () => {
+        const hints = ['req.url'];
+        const result = extractNextSegmentSuggestions(hints, 'req.url');
+
+        expect(result).toEqual(['url']);
+      });
+
+      it('should deduplicate segments from multiple hints', () => {
+        const hints = ['bru.cookies.jar().getCookie(url, name, callback)', 'bru.cookies.jar().getCookies(url, callback)'];
+        const result = extractNextSegmentSuggestions(hints, 'bru.');
+
+        expect(result).toEqual(['cookies']);
+      });
+
+      it('should extract top-level segment when input has no dots', () => {
+        const hints = ['req.url', 'req.getUrl()', 'res.url'];
+        const result = extractNextSegmentSuggestions(hints, 'r');
+
+        expect(result).toEqual(['req', 'res']);
+      });
+    });
+
+    describe('substring matching', () => {
+      it('should return full hints for substring-only matches', () => {
+        const hints = ['base_url', 'api_url', 'url_prefix'];
+        const result = extractNextSegmentSuggestions(hints, 'url');
+
+        // url_prefix is a prefix match (segment), base_url and api_url are substring matches (full hints)
+        expect(result).toEqual(['url_prefix', 'api_url', 'base_url']);
+      });
+
+      it('should return full hints for dotted substring matches', () => {
+        const hints = ['req.getUrl()', 'req.setUrl(url)', 'req.url'];
+        const result = extractNextSegmentSuggestions(hints, 'Url');
+
+        expect(result).toEqual(['req.getUrl()', 'req.setUrl(url)', 'req.url']);
+      });
+
+      it('should not include hints that do not contain the input', () => {
+        const hints = ['base_url', 'api_key', 'url_prefix'];
+        const result = extractNextSegmentSuggestions(hints, 'url');
+
+        expect(result).not.toContain('api_key');
+      });
+    });
+
+    describe('ordering', () => {
+      it('should return prefix matches before substring matches', () => {
+        const hints = ['base_url', 'url_prefix'];
+        const result = extractNextSegmentSuggestions(hints, 'url');
+
+        // url_prefix is prefix → segment "url_prefix"; base_url is substring → full hint
+        expect(result).toEqual(['url_prefix', 'base_url']);
+      });
+
+      it('should sort prefix matches alphabetically among themselves', () => {
+        const hints = ['req.setUrl(url)', 'req.getUrl()', 'req.getMethod()'];
+        const result = extractNextSegmentSuggestions(hints, 'req.');
+
+        expect(result).toEqual(['getMethod()', 'getUrl()', 'setUrl(url)']);
+      });
+
+      it('should sort substring matches alphabetically among themselves', () => {
+        const hints = ['z_url', 'a_url'];
+        const result = extractNextSegmentSuggestions(hints, 'url');
+
+        // Both are substring-only matches
+        expect(result).toEqual(['a_url', 'z_url']);
+      });
+    });
+
+    describe('case insensitivity', () => {
+      it('should match prefix regardless of case', () => {
+        const hints = ['Content-Type', 'Content-Length'];
+        const result = extractNextSegmentSuggestions(hints, 'content');
+
+        expect(result).toEqual(['Content-Length', 'Content-Type']);
+      });
+
+      it('should match substring regardless of case', () => {
+        const hints = ['X-Custom-Type', 'Accept'];
+        const result = extractNextSegmentSuggestions(hints, 'type');
+
+        expect(result).toEqual(['X-Custom-Type']);
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should return an empty array when no hints match', () => {
+        const hints = ['foo', 'bar', 'baz'];
+        const result = extractNextSegmentSuggestions(hints, 'xyz');
+
+        expect(result).toEqual([]);
+      });
+
+      it('should return an empty array for empty hints list', () => {
+        const result = extractNextSegmentSuggestions([], 'url');
+
+        expect(result).toEqual([]);
+      });
+
+      it('should handle single-character input', () => {
+        const hints = ['apple', 'banana', 'avocado'];
+        const result = extractNextSegmentSuggestions(hints, 'a');
+
+        // apple and avocado are prefix matches, banana contains 'a' as substring
+        expect(result).toEqual(['apple', 'avocado', 'banana']);
+      });
+    });
+
+    describe('variable-scope awareness (3rd `variableScopes` argument)', () => {
+      it('offers a scoped, non-process.env hint whole instead of truncating it to its first segment', () => {
+        const hints = ['api', 'api.host'];
+        const variableScopes = { 'api.host': 'collection' };
+        const result = extractNextSegmentSuggestions(hints, '', variableScopes);
+
+        expect(result).toEqual(['api.host', 'api']);
+      });
+
+      it('still truncates a `process.env` scoped hint to its next segment, unaffected by the bypass', () => {
+        const hints = ['process', 'process.env', 'process.env.FOO'];
+        const variableScopes = { 'process.env.FOO': 'process.env' };
+        const result = extractNextSegmentSuggestions(hints, '', variableScopes);
+
+        expect(result).toEqual(['process']);
+      });
+
+      it('falls back to the original truncating behavior when no variableScopes map is passed', () => {
+        const hints = ['api', 'api.host'];
+        const result = extractNextSegmentSuggestions(hints, '');
+
+        expect(result).toEqual(['api']);
+      });
+    });
+
+    describe('scope-based grouping', () => {
+      it('groups by scope in global -> collection -> environment -> folder -> request -> runtime -> process.env -> dynamic -> oauth2 order, then alphabetically within a scope', () => {
+        const hints = [
+          'zRequestVar',
+          'aRequestVar',
+          'runtimeVar',
+          'oauthVar',
+          'globalVar',
+          'folderVar',
+          'envVar',
+          'processEnvVar',
+          'dynamicVar',
+          'collectionVar'
+        ];
+        const variableScopes = {
+          zRequestVar: 'request',
+          aRequestVar: 'request',
+          runtimeVar: 'runtime',
+          oauthVar: 'oauth2',
+          globalVar: 'global',
+          folderVar: 'folder',
+          envVar: 'environment',
+          processEnvVar: 'process.env',
+          dynamicVar: 'dynamic',
+          collectionVar: 'collection'
+        };
+
+        const result = extractNextSegmentSuggestions(hints, '', variableScopes);
+
+        expect(result).toEqual([
+          'globalVar',
+          'collectionVar',
+          'envVar',
+          'folderVar',
+          'aRequestVar',
+          'zRequestVar',
+          'runtimeVar',
+          'processEnvVar',
+          'dynamicVar',
+          'oauthVar'
+        ]);
+      });
+
+      it('sorts an unscoped hint (no recognized scope at all) after every real scope -- including `dynamic` and `oauth2`', () => {
+        const hints = ['$guid', 'plainHint', 'requestVar', 'oauthVar'];
+        const variableScopes = { $guid: 'dynamic', requestVar: 'request', oauthVar: 'oauth2' };
+
+        const result = extractNextSegmentSuggestions(hints, '', variableScopes);
+
+        expect(result).toEqual(['requestVar', '$guid', 'oauthVar', 'plainHint']);
+      });
+
+      it('sorts the `process` segment of process.env variables under the process.env scope: after runtime, before dynamic and oauth2', () => {
+        // Real shape of the hints: process.env.FOO is split into progressive prefixes, and only the
+        // full name has a scope entry -- the `process` segment that comes out has none of its own.
+        const hints = ['$guid', 'process', 'process.env', 'process.env.FOO', 'requestVar', 'runtimeVar', 'oauthVar'];
+        const variableScopes = {
+          '$guid': 'dynamic',
+          'requestVar': 'request',
+          'runtimeVar': 'runtime',
+          'oauthVar': 'oauth2',
+          'process.env.FOO': 'process.env'
+        };
+
+        const result = extractNextSegmentSuggestions(hints, '', variableScopes);
+
+        expect(result).toEqual(['requestVar', 'runtimeVar', 'process', '$guid', 'oauthVar']);
+      });
+
+      it('keeps process.env drill-down segments in the process.env group when drilling in (`process.env.`)', () => {
+        const hints = ['process', 'process.env', 'process.env.FOO', 'process.env.BAR'];
+        const variableScopes = { 'process.env.FOO': 'process.env', 'process.env.BAR': 'process.env' };
+
+        const result = extractNextSegmentSuggestions(hints, 'process.env.', variableScopes);
+
+        expect(result).toEqual(['BAR', 'FOO']);
+      });
+
+      it('does not mark segments as process.env when no scopes are supplied (api/anyword contexts)', () => {
+        const hints = ['zeta', 'process'];
+
+        const result = extractNextSegmentSuggestions(hints, '', {});
+
+        expect(result).toEqual(['process', 'zeta']);
+      });
+    });
+  });
+
+  describe('buildSingleBraceInsertText', () => {
+    it('adds both closing braces when nothing follows the cursor', () => {
+      // e.g. user typed a bare `{` at the end of the line, nothing after the cursor
+      const result = buildSingleBraceInsertText('', 'envVar');
+
+      expect(result).toBe('{envVar}}');
+    });
+
+    it('adds both closing braces when unrelated text follows the cursor', () => {
+      const result = buildSingleBraceInsertText('/api/users', 'envVar');
+
+      expect(result).toBe('{envVar}}');
+    });
+
+    it('adds only one closing brace when a single `}` already follows the cursor', () => {
+      // e.g. auto-closing brackets turned the typed `{` into `{|}` (cursor between them)
+      const result = buildSingleBraceInsertText('}', 'envVar');
+
+      expect(result).toBe('{envVar}');
+    });
+
+    it('adds only one closing brace when a single `}` is followed by other text', () => {
+      const result = buildSingleBraceInsertText('} rest of the value', 'envVar');
+
+      expect(result).toBe('{envVar}');
+    });
+
+    it('adds no closing braces when both already follow the cursor', () => {
+      // e.g. completing inside an already-typed `{{|}}` pair
+      const result = buildSingleBraceInsertText('}}', 'envVar');
+
+      expect(result).toBe('{envVar');
+    });
+
+    it('adds no closing braces when more than two `}` already follow the cursor', () => {
+      // the 3rd+ `}` is the user's own unrelated content — left untouched, not our concern
+      const result = buildSingleBraceInsertText('}}}', 'envVar');
+
+      expect(result).toBe('{envVar');
+    });
+
+    it('treats undefined textAfterCursor the same as empty (end of line)', () => {
+      const result = buildSingleBraceInsertText(undefined, 'envVar');
+
+      expect(result).toBe('{envVar}}');
+    });
+
+    it('works with dynamic ($mock) and process.env-style names', () => {
+      expect(buildSingleBraceInsertText('', '$guid')).toBe('{$guid}}');
+      expect(buildSingleBraceInsertText('', 'process.env.FOO')).toBe('{process.env.FOO}}');
+    });
+  });
+
+  describe('setupAutoComplete', () => {
+    let mockGetAllVariables;
+    let cleanupFn;
+
+    beforeEach(() => {
+      mockGetAllVariables = jest.fn(() => ({ }));
+      mockedCodemirror.state = {};
+    });
+
+    afterEach(() => {
+      if (cleanupFn) {
+        cleanupFn();
+      }
+    });
+
+    describe('Setup and cleanup', () => {
+      it('should setup keyup event listener and return cleanup function', () => {
+        const options = { getAllVariables: mockGetAllVariables };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+
+        expect(mockedCodemirror.on).toHaveBeenCalledWith('keyup', expect.any(Function));
+        expect(cleanupFn).toBeInstanceOf(Function);
+
+        cleanupFn();
+        expect(mockedCodemirror.off).toHaveBeenCalledWith('keyup', expect.any(Function));
+      });
+
+      it('should not setup if editor is null', () => {
+        const result = setupAutoComplete(null, { getAllVariables: mockGetAllVariables });
+
+        expect(result).toBeUndefined();
+        expect(mockedCodemirror.on).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Event handling', () => {
+      it('should trigger hints on character key press', () => {
+        const options = {
+          getAllVariables: mockGetAllVariables,
+          showHintsFor: ['req']
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+        const keyupHandler = mockedCodemirror.on.mock.calls[0][1];
+
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 4 });
+        mockedCodemirror.getLine.mockReturnValue('req.');
+        mockedCodemirror.getRange.mockReturnValue('req.');
+
+        const mockEvent = { key: 'a' };
+        keyupHandler(mockedCodemirror, mockEvent);
+
+        expect(mockGetAllVariables).toHaveBeenCalled();
+        expect(mockedCodemirror.showHint).toHaveBeenCalled();
+      });
+
+      it('should not trigger hints on non-character keys', () => {
+        const options = { getAllVariables: mockGetAllVariables };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+        const keyupHandler = mockedCodemirror.on.mock.calls[0][1];
+
+        const nonCharacterKeys = ['Shift', 'Tab', 'Enter', 'Escape', 'ArrowUp', 'ArrowDown', 'Meta'];
+
+        nonCharacterKeys.forEach((key) => {
+          const mockEvent = { key };
+          keyupHandler(mockedCodemirror, mockEvent);
+        });
+
+        expect(mockedCodemirror.showHint).not.toHaveBeenCalled();
+      });
+
+      it('should close existing completion when no hints available', () => {
+        const options = { getAllVariables: mockGetAllVariables };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+        const keyupHandler = mockedCodemirror.on.mock.calls[0][1];
+
+        const mockCompletion = { close: jest.fn() };
+        mockedCodemirror.state.completionActive = mockCompletion;
+
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 0 });
+        mockedCodemirror.getLine.mockReturnValue('req.bodyy');
+        mockedCodemirror.getRange.mockReturnValue('');
+
+        const mockEvent = { key: 'a' };
+        keyupHandler(mockedCodemirror, mockEvent);
+
+        expect(mockCompletion.close).toHaveBeenCalled();
+      });
+
+      it('should pass options to getAutoCompleteHints', () => {
+        const options = {
+          getAllVariables: mockGetAllVariables,
+          showHintsFor: ['req']
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+        const keyupHandler = mockedCodemirror.on.mock.calls[0][1];
+
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 4 });
+        mockedCodemirror.getLine.mockReturnValue('req.');
+        mockedCodemirror.getRange.mockReturnValue('req.');
+
+        const mockEvent = { key: 'a' };
+        keyupHandler(mockedCodemirror, mockEvent);
+
+        expect(mockedCodemirror.showHint).toHaveBeenCalledWith({
+          hint: expect.any(Function),
+          completeSingle: false
+        });
+      });
+    });
+
+    describe('Manual trigger (brunoTriggerAutocomplete, Ctrl+Space)', () => {
+      const extraMethods = ['replaceRange', 'setCursor', 'getOption'];
+      let cleanupFn;
+
+      beforeEach(() => {
+        mockedCodemirror.replaceRange = jest.fn();
+        mockedCodemirror.setCursor = jest.fn();
+        mockedCodemirror.getOption = jest.fn().mockReturnValue(false);
+      });
+
+      afterEach(() => {
+        if (cleanupFn) cleanupFn();
+        cleanupFn = null;
+        extraMethods.forEach((method) => delete mockedCodemirror[method]);
+        // These tests install their own implementations; don't leak them into later tests.
+        ['getCursor', 'getLine', 'getRange', 'showHint'].forEach((method) => mockedCodemirror[method].mockReset());
+      });
+
+      it('does nothing in a read-only editor, instead of inserting `{{` past CodeMirror\'s readOnly', () => {
+        mockedCodemirror.getOption.mockImplementation((name) => name === 'readOnly');
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 0 });
+        mockedCodemirror.getLine.mockReturnValue('');
+        mockedCodemirror.getRange.mockReturnValue('');
+
+        cleanupFn = setupAutoComplete(mockedCodemirror, {
+          getAllVariables: () => [{ name: 'envVar', scope: 'environment' }],
+          showHintsFor: ['variables']
+        });
+        mockedCodemirror.brunoTriggerAutocomplete();
+
+        expect(mockedCodemirror.replaceRange).not.toHaveBeenCalled();
+        expect(mockedCodemirror.showHint).not.toHaveBeenCalled();
+      });
+
+      it('inserts `{{` and shows the dropdown when the caret is in plain text', () => {
+        const cursor = { line: 0, ch: 0 };
+        let line = '';
+        mockedCodemirror.getCursor.mockReturnValue(cursor);
+        mockedCodemirror.getLine.mockImplementation(() => line);
+        mockedCodemirror.getRange.mockImplementation(() => line);
+        mockedCodemirror.replaceRange.mockImplementation((text) => {
+          line = text;
+          mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 2 });
+        });
+
+        cleanupFn = setupAutoComplete(mockedCodemirror, {
+          getAllVariables: () => [{ name: 'envVar', scope: 'environment' }],
+          showHintsFor: ['variables']
+        });
+        mockedCodemirror.brunoTriggerAutocomplete();
+
+        expect(mockedCodemirror.replaceRange).toHaveBeenCalledWith('{{', cursor, cursor);
+        expect(mockedCodemirror.showHint).toHaveBeenCalledTimes(1);
+      });
+
+      it('still works in OFF mode: Ctrl+Space only suppresses typing-triggered hints', () => {
+        const cursor = { line: 0, ch: 0 };
+        let line = '';
+        mockedCodemirror.getCursor.mockReturnValue(cursor);
+        mockedCodemirror.getLine.mockImplementation(() => line);
+        mockedCodemirror.getRange.mockImplementation(() => line);
+        mockedCodemirror.replaceRange.mockImplementation((text) => {
+          line = text;
+          mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 2 });
+        });
+
+        cleanupFn = setupAutoComplete(mockedCodemirror, {
+          getAllVariables: () => [{ name: 'envVar', scope: 'environment' }],
+          showHintsFor: ['variables'],
+          variableAutocomplete: AUTOCOMPLETE_TRIGGER.OFF
+        });
+        mockedCodemirror.brunoTriggerAutocomplete();
+
+        expect(mockedCodemirror.replaceRange).toHaveBeenCalledWith('{{', cursor, cursor);
+        expect(mockedCodemirror.showHint).toHaveBeenCalledTimes(1);
+      });
+
+      it('removes the inserted `{{` again when there are no hints to show', () => {
+        // Caret already after `{{{`: the first lookup returns null, and so does the one after our insert.
+        const cursor = { line: 0, ch: 3 };
+        mockedCodemirror.getCursor.mockReturnValue(cursor);
+        mockedCodemirror.getLine.mockReturnValue('{{{');
+        mockedCodemirror.getRange.mockReturnValue('{{{');
+        mockedCodemirror.replaceRange.mockImplementation((text) => {
+          if (text === '{{') {
+            mockedCodemirror.getLine.mockReturnValue('{{{{{');
+            mockedCodemirror.getRange.mockReturnValue('{{{{{');
+            mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 5 });
+          }
+        });
+
+        cleanupFn = setupAutoComplete(mockedCodemirror, {
+          getAllVariables: () => [{ name: 'envVar', scope: 'environment' }],
+          showHintsFor: ['variables']
+        });
+        mockedCodemirror.brunoTriggerAutocomplete();
+
+        expect(mockedCodemirror.replaceRange).toHaveBeenNthCalledWith(1, '{{', cursor, cursor);
+        expect(mockedCodemirror.replaceRange).toHaveBeenNthCalledWith(2, '', cursor, { line: 0, ch: 5 });
+        expect(mockedCodemirror.setCursor).toHaveBeenLastCalledWith(cursor);
+        expect(mockedCodemirror.showHint).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Click event handling (showHintsOnClick)', () => {
+      it('should setup mousedown event listener when showHintsOnClick is enabled', () => {
+        const options = {
+          getAllVariables: mockGetAllVariables,
+          showHintsOnClick: true
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+
+        expect(mockedCodemirror.on).toHaveBeenCalledWith('keyup', expect.any(Function));
+        expect(mockedCodemirror.on).toHaveBeenCalledWith('mousedown', expect.any(Function));
+        expect(mockedCodemirror.on).toHaveBeenCalledTimes(2);
+      });
+
+      it('should not setup mousedown event listener when showHintsOnClick is disabled', () => {
+        const options = {
+          getAllVariables: mockGetAllVariables,
+          showHintsOnClick: false
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+
+        expect(mockedCodemirror.on).toHaveBeenCalledWith('keyup', expect.any(Function));
+        expect(mockedCodemirror.on).toHaveBeenCalledTimes(1);
+      });
+
+      it('should not setup mousedown event listener when showHintsOnClick is undefined', () => {
+        const options = {
+          getAllVariables: mockGetAllVariables
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+
+        expect(mockedCodemirror.on).toHaveBeenCalledWith('keyup', expect.any(Function));
+        expect(mockedCodemirror.on).toHaveBeenCalledTimes(1);
+      });
+
+      it('should show hints on click when showHintsOnClick is enabled', () => {
+        jest.useFakeTimers();
+
+        const mockGetAnywordAutocompleteHints = jest.fn(() => ['Content-Type', 'Accept']);
+        const options = {
+          getAllVariables: mockGetAllVariables,
+          getAnywordAutocompleteHints: mockGetAnywordAutocompleteHints,
+          showHintsOnClick: true,
+          showHintsFor: ['req', 'variables']
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+
+        // Find the click handler (mousedown event)
+        const clickHandler = mockedCodemirror.on.mock.calls.find((call) => call[0] === 'mousedown')[1];
+
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 0 });
+
+        clickHandler(mockedCodemirror);
+
+        // Run all timers to execute the setTimeout
+        jest.runAllTimers();
+
+        expect(mockGetAllVariables).toHaveBeenCalled();
+        expect(mockGetAnywordAutocompleteHints).toHaveBeenCalled();
+        expect(mockedCodemirror.showHint).toHaveBeenCalled();
+
+        jest.useRealTimers();
+      });
+
+      it('should not show hints on click when showHintsOnClick is disabled', () => {
+        const options = {
+          getAllVariables: mockGetAllVariables,
+          showHintsOnClick: false
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+
+        // There should be no mousedown handler
+        const mousedownCalls = mockedCodemirror.on.mock.calls.filter((call) => call[0] === 'mousedown');
+        expect(mousedownCalls).toHaveLength(0);
+      });
+
+      it('should cleanup mousedown event listener when showHintsOnClick was enabled', () => {
+        const options = {
+          getAllVariables: mockGetAllVariables,
+          showHintsOnClick: true
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+
+        cleanupFn();
+
+        expect(mockedCodemirror.off).toHaveBeenCalledWith('keyup', expect.any(Function));
+        expect(mockedCodemirror.off).toHaveBeenCalledWith('mousedown', expect.any(Function));
+        expect(mockedCodemirror.off).toHaveBeenCalledTimes(2);
+      });
+
+      it('should only cleanup keyup event listener when showHintsOnClick was disabled', () => {
+        const options = {
+          getAllVariables: mockGetAllVariables,
+          showHintsOnClick: false
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+
+        cleanupFn();
+
+        expect(mockedCodemirror.off).toHaveBeenCalledWith('keyup', expect.any(Function));
+        expect(mockedCodemirror.off).toHaveBeenCalledTimes(1);
+      });
+
+      it('should show all available hints on click based on showHintsFor configuration', () => {
+        jest.useFakeTimers();
+
+        const mockGetAnywordAutocompleteHints = jest.fn(() => ['Content-Type', 'Accept']);
+        const options = {
+          getAllVariables: mockGetAllVariables.mockReturnValue({
+            envVar1: 'value1',
+            envVar2: 'value2'
+          }),
+          getAnywordAutocompleteHints: mockGetAnywordAutocompleteHints,
+          showHintsOnClick: true,
+          showHintsFor: ['req', 'variables']
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+
+        // Find the click handler (mousedown event)
+        const clickHandler = mockedCodemirror.on.mock.calls.find((call) => call[0] === 'mousedown')[1];
+
+        const mockCursor = { line: 0, ch: 0 };
+        mockedCodemirror.getCursor.mockReturnValue(mockCursor);
+
+        clickHandler(mockedCodemirror);
+
+        // Run all timers to execute the setTimeout
+        jest.runAllTimers();
+
+        expect(mockedCodemirror.showHint).toHaveBeenCalledWith({
+          hint: expect.any(Function),
+          completeSingle: false
+        });
+
+        // Verify the hint function returns the expected structure
+        const hintCall = mockedCodemirror.showHint.mock.calls[0][0];
+        const hintResult = hintCall.hint();
+
+        expect(hintResult).toEqual({
+          list: expect.any(Array),
+          from: mockCursor,
+          to: mockCursor
+        });
+        expect(hintResult.list.length).toBeGreaterThan(0);
+
+        jest.useRealTimers();
+      });
+
+      it('should not show hints on click when no hints are available', () => {
+        const options = {
+          getAllVariables: mockGetAllVariables.mockReturnValue({}),
+          getAnywordAutocompleteHints: jest.fn(() => []),
+          showHintsOnClick: true,
+          showHintsFor: []
+        };
+        cleanupFn = setupAutoComplete(mockedCodemirror, options);
+
+        // Find the click handler (mousedown event)
+        const clickHandler = mockedCodemirror.on.mock.calls.find((call) => call[0] === 'mousedown')[1];
+
+        mockedCodemirror.getCursor.mockReturnValue({ line: 0, ch: 0 });
+
+        clickHandler(mockedCodemirror);
+
+        expect(mockedCodemirror.showHint).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('CodeMirror integration', () => {
+    it('should define autocomplete command if not exists', () => {
+      delete mockedCodemirror.commands.autocomplete;
+
+      jest.isolateModules(() => {
+        require('./autocomplete');
+      });
+
+      expect(mockedCodemirror.commands.autocomplete).toBeDefined();
+      expect(typeof mockedCodemirror.commands.autocomplete).toBe('function');
+    });
+
+    it('should not override existing autocomplete command', () => {
+      const existingCommand = jest.fn();
+      mockedCodemirror.commands.autocomplete = existingCommand;
+
+      jest.isolateModules(() => {
+        require('./autocomplete');
+      });
+
+      expect(mockedCodemirror.commands.autocomplete).toBe(existingCommand);
+    });
+  });
+
+  describe('truncateHintLabel', () => {
+    it('leaves short names untouched', () => {
+      expect(truncateHintLabel('envVar')).toBe('envVar');
+    });
+
+    it('leaves a name exactly at the limit untouched', () => {
+      const exact = 'a'.repeat(46);
+      expect(truncateHintLabel(exact)).toBe(exact);
+    });
+
+    it('cuts a name past the limit down to 46 chars ending in a literal "..."', () => {
+      const long = 'thisIsAVeryLongEnvironmentVariableNameThatShouldOverflowTheDropdown';
+      const result = truncateHintLabel(long);
+
+      expect(result).toHaveLength(46);
+      expect(result.endsWith('...')).toBe(true);
+      expect(result.slice(0, -3)).toBe(long.slice(0, 43));
+    });
+
+    it('passes through falsy input unchanged', () => {
+      expect(truncateHintLabel('')).toBe('');
+      expect(truncateHintLabel(undefined)).toBe(undefined);
+    });
+  });
+});

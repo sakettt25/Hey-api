@@ -1,0 +1,26 @@
+# Filter out erroneous .exe entries from PATH to prevent EACCES errors
+if [ -n "$PATH" ]; then
+  NEW_PATH=""
+  IFS=':'
+  for p in $PATH; do
+    case "$p" in
+      *.exe|*.EXE) ;;
+      *) NEW_PATH="${NEW_PATH:+$NEW_PATH:}$p" ;;
+    esac
+  done
+  unset IFS
+  export PATH="$NEW_PATH"
+fi
+
+# Only run nano-staged if HEAD exists, allowing initial commit to proceed smoothly
+if git rev-parse --verify HEAD >/dev/null 2>&1; then
+  npx nano-staged
+fi
+
+if git diff --cached --name-only 2>/dev/null | grep -q '^packages/bruno-sqlite/migrations/'; then
+  # Only attempt schema generation if Node version supports node:sqlite (Node 22+)
+  if node -e "process.exit(Number(process.versions.node.split('.')[0]) >= 22 ? 0 : 1)" 2>/dev/null; then
+    npm run schema --workspace=packages/bruno-sqlite --silent || true
+    git add packages/bruno-sqlite/SCHEMA.md 2>/dev/null || true
+  fi
+fi
