@@ -1,0 +1,16 @@
+{
+  "name": "@nats/docs",
+  "version": "0.0.1",
+  "main": "src/index.js",
+  "files": [
+    "src",
+    "package.json"
+  ],
+  "dependencies": {},
+  "author": "Saket Saurav",
+  "homepage": "https://github.com/sakettt25/Hey-api",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sakettt25/Hey-api.git"
+  }
+}

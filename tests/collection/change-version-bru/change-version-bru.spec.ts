@@ -10,12 +10,12 @@ test.describe('Change Collection Version (bru collection)', () => {
     await closeAllCollections(page);
   });
 
-  test('a bru collection with no version shows "Not Set", and saving writes it to bruno.json', async ({
+  test('a bru collection with no version shows "Not Set", and saving writes it to nats.json', async ({
     pageWithUserData: page,
     collectionFixturePath
   }) => {
     const collectionPath = collectionFixturePath!;
-    const brunoJsonPath = path.join(collectionPath, 'bruno.json');
+    const brunoJsonPath = path.join(collectionPath, 'nats.json');
 
     await test.step('the collection has no version yet (only the internal "1" marker)', async () => {
       const config = JSON.parse(fs.readFileSync(brunoJsonPath, 'utf-8'));
@@ -39,7 +39,7 @@ test.describe('Change Collection Version (bru collection)', () => {
       await expect(page.getByText('Collection version updated')).toBeVisible();
     });
 
-    await test.step('the screen shows the new version and bruno.json now has it (the "1" marker stays)', async () => {
+    await test.step('the screen shows the new version and nats.json now has it (the "1" marker stays)', async () => {
       await expect(page.getByTestId('info-version-value')).toHaveText('v2.3.4');
 
       await expect

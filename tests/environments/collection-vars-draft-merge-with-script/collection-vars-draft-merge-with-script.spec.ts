@@ -47,11 +47,11 @@ test.describe('Collection variables draft merge with script-set variables', () =
       await expect(locators.environment.variableValue('scriptCollVar')).toContainText('from-script-789');
     });
 
-    await test.step('Verify script var persisted to collection.bru', async () => {
+    await test.step('Verify script var persisted to collection.nats', async () => {
       const collectionBruPath = path.join(
         collectionFixturePath!,
         'collection-vars-draft-merge-test',
-        'collection.bru'
+        'collection.nats'
       );
       await expect.poll(() => {
         const content = fs.readFileSync(collectionBruPath, 'utf8');

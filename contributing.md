@@ -27,7 +27,7 @@ Before contributing, understand the product constraints:
 ### Install
 
 ```sh
-git clone https://github.com/hey-api/hey-api.git
+git clone https://github.com/sakettt25/Hey-api.git
 cd hey-api
 npm install
 ```
@@ -117,15 +117,15 @@ Run unit tests:
 
 ```sh
 # Bruno-electron unit tests
-cd packages/bruno-electron
+cd packages/electron
 node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --forceExit
 
 # JS sandbox tests
-cd packages/bruno-js
+cd packages/js
 node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --forceExit
 
 # Converter tests
-cd packages/bruno-converters
+cd packages/converters
 node ../../node_modules/jest/bin/jest.js
 ```
 

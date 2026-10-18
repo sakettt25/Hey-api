@@ -15,7 +15,7 @@ vars:pre-request {
 `;
 
 const restoreCollectionFixture = (collectionFixturePath: string) => {
-  const collectionBru = path.join(collectionFixturePath, 'collection.bru');
+  const collectionBru = path.join(collectionFixturePath, 'collection.nats');
   fs.writeFileSync(collectionBru, COLLECTION_FILE_ORIGINAL, 'utf8');
 };
 
@@ -31,7 +31,7 @@ test.describe.serial('bru.setCollectionVar(name, value) — typed value persiste
     collectionFixturePath,
     restartApp
   }) => {
-    const collectionBruPath = path.join(collectionFixturePath!, 'collection.bru');
+    const collectionBruPath = path.join(collectionFixturePath!, 'collection.nats');
     const locators = buildCommonLocators(page);
 
     await test.step('Run the typed-persist request', async () => {
@@ -40,7 +40,7 @@ test.describe.serial('bru.setCollectionVar(name, value) — typed value persiste
       await sendRequest(page, 200);
     });
 
-    await test.step('collection.bru on disk carries the right dataType annotations', async () => {
+    await test.step('collection.nats on disk carries the right dataType annotations', async () => {
       await expect.poll(() => fs.readFileSync(collectionBruPath, 'utf8'), { timeout: 5000 })
         .toMatch(/@number\s+coll_num:\s*42/);
       const content = fs.readFileSync(collectionBruPath, 'utf8');

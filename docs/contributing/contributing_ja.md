@@ -68,7 +68,7 @@ find . -type f -name "package-lock.json" -delete
 
 ```bash
 # ブルーノスキーマのテストを実行します
-npm test --workspace=packages/bruno-schema
+npm test --workspace=packages/schema
 
 # すべてのワークスペースでテストを実行します
 npm test --workspaces --if-present

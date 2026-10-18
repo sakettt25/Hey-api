@@ -32,7 +32,7 @@ test.describe('Collection Default Environment - Presets & sharing', () => {
     await closeAllCollections(page);
   });
 
-  test('setting the default environment in Presets persists to bruno.json', async ({ page, createTmpDir }) => {
+  test('setting the default environment in Presets persists to nats.json', async ({ page, createTmpDir }) => {
     const location = await createTmpDir('default-env-presets');
 
     await test.step('Create collection with prod/dev environments', async () => {
@@ -46,7 +46,7 @@ test.describe('Collection Default Environment - Presets & sharing', () => {
     const collectionDir = findCollectionDir(location);
     await expect
       .poll(() => {
-        const cfg = JSON.parse(fs.readFileSync(path.join(collectionDir, 'bruno.json'), 'utf8'));
+        const cfg = JSON.parse(fs.readFileSync(path.join(collectionDir, 'nats.json'), 'utf8'));
         return cfg?.presets?.defaultEnvironment;
       }, { timeout: 10000 })
       .toBe('prod');
@@ -72,7 +72,7 @@ test.describe('Collection Default Environment - Presets & sharing', () => {
       .toBe(true);
   });
 
-  test('selecting "None" clears the default environment from bruno.json', async ({ page, createTmpDir }) => {
+  test('selecting "None" clears the default environment from nats.json', async ({ page, createTmpDir }) => {
     const locators = buildCommonLocators(page);
     const location = await createTmpDir('default-env-presets-clear');
 
@@ -84,7 +84,7 @@ test.describe('Collection Default Environment - Presets & sharing', () => {
 
     const collectionDir = findCollectionDir(location);
     const readDefaultEnvironment = () => {
-      const cfg = JSON.parse(fs.readFileSync(path.join(collectionDir, 'bruno.json'), 'utf8'));
+      const cfg = JSON.parse(fs.readFileSync(path.join(collectionDir, 'nats.json'), 'utf8'));
       return cfg?.presets?.defaultEnvironment;
     };
 
@@ -101,7 +101,7 @@ test.describe('Collection Default Environment - Presets & sharing', () => {
     await expect.poll(readDefaultEnvironment, { timeout: 10000 }).toBeUndefined();
   });
 
-  test('exported ZIP carries the configured default environment in bruno.json', async ({ page, electronApp, createTmpDir }) => {
+  test('exported ZIP carries the configured default environment in nats.json', async ({ page, electronApp, createTmpDir }) => {
     const location = await createTmpDir('default-env-zip');
 
     await test.step('Create collection with prod/dev environments', async () => {
@@ -115,7 +115,7 @@ test.describe('Collection Default Environment - Presets & sharing', () => {
     const collectionDir = findCollectionDir(location);
     await expect
       .poll(() => {
-        const cfg = JSON.parse(fs.readFileSync(path.join(collectionDir, 'bruno.json'), 'utf8'));
+        const cfg = JSON.parse(fs.readFileSync(path.join(collectionDir, 'nats.json'), 'utf8'));
         return cfg?.presets?.defaultEnvironment;
       }, { timeout: 10000 })
       .toBe('prod');
@@ -148,11 +148,11 @@ test.describe('Collection Default Environment - Presets & sharing', () => {
     const { environment } = buildCommonLocators(page);
 
     await test.step('Build shared-collection ZIP with a configured default environment', async () => {
-      // Build a shared-collection ZIP whose bruno.json carries presets.defaultEnvironment.
+      // Build a shared-collection ZIP whose nats.json carries presets.defaultEnvironment.
       const zipPath = path.join(await createTmpDir('imported-default-env-src'), 'shared.zip');
       const zip = new AdmZip();
       zip.addFile(
-        'bruno.json',
+        'nats.json',
         Buffer.from(
           JSON.stringify(
             { version: '1', name: 'imported-default-env', type: 'collection', presets: { defaultEnvironment: 'prod' } },

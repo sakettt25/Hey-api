@@ -75,7 +75,7 @@ This attribute is set when `main:app-loaded` IPC arrives (independent of `render
 
 The suite must be isolated (unique tmp paths, no shared state).
 
-Most specs load fixtures via `collectionFixturePath` (copies `fixtures/collection(s)/` to a temp dir) or `pageWithUserData` (loads `init-user-data/` into a fresh temp userData dir). These operate on **temp copies** — they need **no** cleanup, even though they mutate files on disk (e.g. persistence specs writing to `environments/*.bru` or `collection.bru`). Only a spec that mutates a **committed** fixture **in place** must restore it in `afterAll` — those use `git checkout <fixturePath>`. Don't flag a missing `afterAll` on a temp-copy spec.
+Most specs load fixtures via `collectionFixturePath` (copies `fixtures/collection(s)/` to a temp dir) or `pageWithUserData` (loads `init-user-data/` into a fresh temp userData dir). These operate on **temp copies** — they need **no** cleanup, even though they mutate files on disk (e.g. persistence specs writing to `environments/*.bru` or `collection.nats`). Only a spec that mutates a **committed** fixture **in place** must restore it in `afterAll` — those use `git checkout <fixturePath>`. Don't flag a missing `afterAll` on a temp-copy spec.
 
 ## Common Pitfalls
 

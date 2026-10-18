@@ -595,7 +595,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI
     },
     {
-      command: 'npm start --workspace=packages/bruno-tests',
+      command: 'npm start --workspace=packages/tests',
       url: 'http://localhost:8081/ping',
       reuseExistingServer: !process.env.CI
     }

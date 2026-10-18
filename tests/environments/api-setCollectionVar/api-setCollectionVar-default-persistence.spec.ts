@@ -10,7 +10,7 @@ test.describe.serial('bru.setCollectionVar(name, value) - default persistence', 
     restartApp,
     collectionFixturePath
   }) => {
-    const collectionBruPath = path.join(collectionFixturePath!, 'collection.bru');
+    const collectionBruPath = path.join(collectionFixturePath!, 'collection.nats');
     const locators = buildCommonLocators(page);
 
     const openCollectionVarsTab = async (p = page) => {
@@ -29,7 +29,7 @@ test.describe.serial('bru.setCollectionVar(name, value) - default persistence', 
     await expect(locators.environment.variableRowByName('token')).toBeVisible();
     await expect(locators.environment.variableValue('token')).toContainText('secret');
 
-    // Pre-restart disk: collection.bru contains `token: secret`.
+    // Pre-restart disk: collection.nats contains `token: secret`.
     await expect.poll(() => fs.readFileSync(collectionBruPath, 'utf8'), { timeout: 5000 })
       .toMatch(/token:\s*secret/);
 

@@ -6,7 +6,7 @@ const COLLECTION_NAME = 'folder-tags-yml';
 
 /**
  * The yml mirror of `tests/folder/tags`. Folder tags live in `info.tags` of folder.yml rather than
- * `meta.tags` of folder.bru. The tree is identical:
+ * `meta.tags` of folder.nats. The tree is identical:
  *
  *   untagged                  -> []
  *   own-tagged      [smoke]   -> [smoke]

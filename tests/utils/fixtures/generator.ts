@@ -110,21 +110,21 @@ export async function generateCollection(
 }
 
 /**
- * Generate collection root files (bruno.json and collection.bru/opencollection.yml)
+ * Generate collection root files (nats.json and collection.nats/opencollection.yml)
  */
 async function generateCollectionRoot(
   basePath: string,
   name: string,
   format: CollectionFormat
 ): Promise<void> {
-  // Always create bruno.json
+  // Always create nats.json
   const brunoJson = {
     version: '1',
     name,
     type: 'collection'
   };
   await fs.promises.writeFile(
-    path.join(basePath, 'bruno.json'),
+    path.join(basePath, 'nats.json'),
     JSON.stringify(brunoJson, null, 2)
   );
 
@@ -138,7 +138,7 @@ auth {
 }
 `;
     await fs.promises.writeFile(
-      path.join(basePath, 'collection.bru'),
+      path.join(basePath, 'collection.nats'),
       collectionBru
     );
   } else {

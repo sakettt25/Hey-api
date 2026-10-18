@@ -55,10 +55,10 @@ async function buildSymlinkFixture(format: Format, fileCacheEnabled: boolean): P
 
   try {
     await fs.promises.writeFile(
-      path.join(collectionPath, 'bruno.json'),
+      path.join(collectionPath, 'nats.json'),
       JSON.stringify({ version: '1', name: COLLECTION_NAME, type: 'collection' }, null, 2)
     );
-    const collectionRootFile = format === 'bru' ? 'collection.bru' : 'opencollection.yml';
+    const collectionRootFile = format === 'bru' ? 'collection.nats' : 'opencollection.yml';
     await fs.promises.writeFile(path.join(collectionPath, collectionRootFile), collectionFile(format));
     await fs.promises.writeFile(path.join(collectionPath, `RealRequest.${ext}`), requestFile(format, 'RealRequest'));
 

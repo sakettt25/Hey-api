@@ -58,7 +58,7 @@ test.describe('Naming collisions - clone collection', () => {
 
     await test.step('On disk: a "MyColl copy" collection directory exists at the location', async () => {
       await expect
-        .poll(() => fs.existsSync(path.join(cloneLocation, 'MyColl copy', 'bruno.json')), { timeout: 10000 })
+        .poll(() => fs.existsSync(path.join(cloneLocation, 'MyColl copy', 'nats.json')), { timeout: 10000 })
         .toBe(true);
     });
   });
@@ -84,7 +84,7 @@ test.describe('Naming collisions - clone collection', () => {
 
     await test.step('On disk: directory silently suffixed to "MyColl copy 1"', async () => {
       await expect
-        .poll(() => fs.existsSync(path.join(cloneLocation, 'MyColl copy 1', 'bruno.json')), { timeout: 10000 })
+        .poll(() => fs.existsSync(path.join(cloneLocation, 'MyColl copy 1', 'nats.json')), { timeout: 10000 })
         .toBe(true);
     });
   });

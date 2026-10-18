@@ -20,8 +20,8 @@ Full script list: root `package.json`. Setup: `nvm use && npm i --legacy-peer-de
 
 ```bash
 # Single unit test (Jest) — scope to the workspace, pass a path/pattern after --
-npm test --workspace=packages/bruno-app -- path/to/file.spec.js
-npm test --workspace=packages/bruno-requests -- -t "test name pattern"
+npm test --workspace=packages/app -- path/to/file.spec.js
+npm test --workspace=packages/requests -- -t "test name pattern"
 
 # Single e2e test (Playwright) — a project flag is REQUIRED (config has no default)
 npx playwright test tests/collection/create-collection.spec.ts --project=default
@@ -43,8 +43,8 @@ npm run watch:common            # also watch:requests, watch:converters
 
 ## Key Architecture
 
-- **Main process entry**: `packages/bruno-electron/src/index.js`
-- **Renderer + Redux store**: `packages/bruno-app/src/providers/ReduxStore/`
+- **Main process entry**: `packages/electron/src/index.js`
+- **Renderer + Redux store**: `packages/app/src/providers/ReduxStore/`
 - Packages live under `packages/`, with top-level `tests/` and `playwright/`.
 
 ## Testing
@@ -66,9 +66,9 @@ Non-obvious project rules worth holding:
 ## Detailed rules & references
 
 Path-scoped rules in `.claude/rules/` auto-attach when you touch matching files:
-`architecture.md` (`@usebruno/*` dependency boundaries, manifests), `bruno-app-layout.md` (bruno-app
+`architecture.md` (`@nats/*` dependency boundaries, manifests), `bruno-app-layout.md` (bruno-app
 module layout), `electron-ipc.md` (IPC handlers + startup), `redux-store.md` (slices/middleware),
-`sqlite.md` (`@usebruno/sqlite` — migrations, statements, per-statement IPC), `testing.md` (e2e
+`sqlite.md` (`@nats/sqlite` — migrations, statements, per-statement IPC), `testing.md` (e2e
 patterns & gotchas), `cross-platform.md` (Windows file/process/path pitfalls), `dsl-changes.md`
 (on-disk `.bru`/`.yml` format & backward compat), `feature-parity.md` (co-related features —
 app↔CLI twins, converter/shim/level/protocol pairs), `conventions.md` (readability, reuse,

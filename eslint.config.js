@@ -23,21 +23,21 @@ const mainLintFiles = [
   './eslint.config.js',
   'tests/**/*.{ts,js}',
   'playwright/**/*.{js,ts}',
-  'packages/bruno-app/**/*.{js,jsx,ts}',
-  'packages/bruno-app/plugins/**/*.{js,cjs,mjs}',
-  'packages/bruno-app/src/test-utils/mocks/codemirror.js',
-  'packages/bruno-cli/**/*.js',
-  'packages/bruno-common/**/*.ts',
-  'packages/bruno-converters/**/*.js',
-  'packages/bruno-electron/**/*.js',
-  'packages/bruno-filestore/**/*.ts',
-  'packages/bruno-schema-types/**/*.ts',
-  'packages/bruno-js/**/*.js',
-  'packages/bruno-lang/**/*.js',
-  'packages/bruno-requests/**/*.ts',
-  'packages/bruno-requests/**/*.js',
-  'packages/bruno-tests/**/*.{js,ts}',
-  'packages/bruno-sqlite/**/*.{js,ts}'
+  'packages/app/**/*.{js,jsx,ts}',
+  'packages/app/plugins/**/*.{js,cjs,mjs}',
+  'packages/app/src/test-utils/mocks/codemirror.js',
+  'packages/cli/**/*.js',
+  'packages/common/**/*.ts',
+  'packages/converters/**/*.js',
+  'packages/electron/**/*.js',
+  'packages/filestore/**/*.ts',
+  'packages/schema-types/**/*.ts',
+  'packages/js/**/*.js',
+  'packages/lang/**/*.js',
+  'packages/requests/**/*.ts',
+  'packages/requests/**/*.js',
+  'packages/tests/**/*.{js,ts}',
+  'packages/sqlite/**/*.{js,ts}'
 ];
 
 module.exports = runESMImports().then(() => defineConfig([
@@ -47,10 +47,10 @@ module.exports = runESMImports().then(() => defineConfig([
       '**/node_modules/**/*',
       '**/dist/**/*',
       '**/*.bru',
-      'packages/bruno-js/src/sandbox/bundle-browser-rollup.js',
-      'packages/bruno-app/public/static/**/*',
-      'packages/bruno-app/.next/**/*',
-      'packages/bruno-electron/web/**/*'
+      'packages/js/src/sandbox/bundle-browser-rollup.js',
+      'packages/app/public/static/**/*',
+      'packages/app/.next/**/*',
+      'packages/electron/web/**/*'
     ]
   },
   {
@@ -105,7 +105,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-app/**/*.{js,jsx,ts}'],
+    files: ['packages/app/**/*.{js,jsx,ts}'],
     ignores: ['**/*.config.js', '**/public/**/*', '**/plugins/**/*'],
     languageOptions: {
       globals: {
@@ -130,7 +130,7 @@ module.exports = runESMImports().then(() => defineConfig([
   },
   {
     // Rsbuild/rspack plugins are Node build tooling (CommonJS + ESM), not browser UI.
-    files: ['packages/bruno-app/plugins/**/*.{js,cjs,mjs}'],
+    files: ['packages/app/plugins/**/*.{js,cjs,mjs}'],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -142,7 +142,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-app/**/*.{js,jsx,ts}'],
+    files: ['packages/app/**/*.{js,jsx,ts}'],
     ignores: ['**/*.config.js', '**/public/**/*', '**/plugins/**/*'],
     plugins: { 'react-hooks': require('eslint-plugin-react-hooks') },
     rules: {
@@ -152,7 +152,7 @@ module.exports = runESMImports().then(() => defineConfig([
   },
   {
     // It prevents lint errors when using CommonJS exports (module.exports) in Jest mocks.
-    files: ['packages/bruno-app/src/test-utils/mocks/codemirror.js'],
+    files: ['packages/app/src/test-utils/mocks/codemirror.js'],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -165,7 +165,7 @@ module.exports = runESMImports().then(() => defineConfig([
   },
   {
     // Storybook config files use CommonJS with __dirname and module.exports
-    files: ['packages/bruno-app/storybook/**/*.js'],
+    files: ['packages/app/storybook/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.node
@@ -176,7 +176,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-cli/**/*.js'],
+    files: ['packages/cli/**/*.js'],
     ignores: ['**/*.config.js'],
     languageOptions: {
       globals: {
@@ -192,7 +192,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-common/**/*.ts'],
+    files: ['packages/common/**/*.ts'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -203,7 +203,7 @@ module.exports = runESMImports().then(() => defineConfig([
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './packages/bruno-common/tsconfig.json'
+        project: './packages/common/tsconfig.json'
       }
     },
     rules: {
@@ -211,7 +211,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-converters/**/*.js'],
+    files: ['packages/converters/**/*.js'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -229,7 +229,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-electron/**/*.js'],
+    files: ['packages/electron/**/*.js'],
     ignores: ['**/*.config.js', '**/web/**/*'],
     languageOptions: {
       globals: {
@@ -242,7 +242,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-filestore/**/*.ts'],
+    files: ['packages/filestore/**/*.ts'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -253,7 +253,7 @@ module.exports = runESMImports().then(() => defineConfig([
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './packages/bruno-filestore/tsconfig.json'
+        project: './packages/filestore/tsconfig.json'
       }
     },
     rules: {
@@ -261,7 +261,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-js/**/*.js'],
+    files: ['packages/js/**/*.js'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -282,7 +282,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-lang/**/*.js'],
+    files: ['packages/lang/**/*.js'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -299,7 +299,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-requests/**/*.ts'],
+    files: ['packages/requests/**/*.ts'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -310,7 +310,7 @@ module.exports = runESMImports().then(() => defineConfig([
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './packages/bruno-requests/tsconfig.json'
+        project: './packages/requests/tsconfig.json'
       }
     },
     rules: {
@@ -318,7 +318,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-requests/**/*.js'],
+    files: ['packages/requests/**/*.js'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {

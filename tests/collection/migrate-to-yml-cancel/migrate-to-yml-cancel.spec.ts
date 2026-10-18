@@ -63,7 +63,7 @@ test.describe('Cancelling a bru to yml migration restores the collection', () =>
         .poll(() => listFilesRecursive(collectionPath), { timeout: 10000 })
         .toEqual(filesBefore);
       expect(fs.existsSync(path.join(collectionPath, 'opencollection.yml'))).toBe(false);
-      expect(fs.existsSync(path.join(collectionPath, 'bruno.json'))).toBe(true);
+      expect(fs.existsSync(path.join(collectionPath, 'nats.json'))).toBe(true);
     });
 
     await test.step('Collection reopens in bru form and still offers the migration', async () => {

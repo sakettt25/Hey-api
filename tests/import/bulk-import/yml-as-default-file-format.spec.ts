@@ -39,7 +39,7 @@ test.describe('Bulk Import default file format', () => {
       await expect(locators.import.bulkModal()).toBeHidden();
     });
 
-    await test.step('Verify each collection is written as opencollection.yml, not bruno.json', async () => {
+    await test.step('Verify each collection is written as opencollection.yml, not nats.json', async () => {
       const collectionDirs = fs
         .readdirSync(importDir, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
@@ -50,7 +50,7 @@ test.describe('Bulk Import default file format', () => {
       for (const dir of collectionDirs) {
         const files = fs.readdirSync(dir);
         expect(files).toContain('opencollection.yml');
-        expect(files).not.toContain('bruno.json');
+        expect(files).not.toContain('nats.json');
       }
     });
   });

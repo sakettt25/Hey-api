@@ -111,7 +111,7 @@ async function setup() {
     execCommand('npm run build:bruno-sqlite', 'Building bruno-sqlite');
 
     // Bundle JS sandbox libraries
-    execCommand('npm run sandbox:bundle-libraries --workspace=packages/bruno-js', 'Bundling JS sandbox libraries');
+    execCommand('npm run sandbox:bundle-libraries --workspace=packages/js', 'Bundling JS sandbox libraries');
 
     console.log(`\n${icons.success} Setup completed successfully!\n`);
   } catch (error) {

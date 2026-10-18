@@ -1,11 +1,11 @@
 ---
 paths:
-  - "packages/bruno-sqlite/**/*"
-  - "packages/bruno-electron/src/ipc/sqlite.js"
-  - "packages/bruno-electron/src/services/sqlite/**/*"
+  - "packages/sqlite/**/*"
+  - "packages/electron/src/ipc/sqlite.js"
+  - "packages/electron/src/services/sqlite/**/*"
 ---
 
-# SQLite SDK (`@usebruno/sqlite`)
+# SQLite SDK (`@nats/sqlite`)
 
 Bruno's local database layer. You author **migrations** (`migrations/*.ts`) and **statements**
 (`statements/*.sql`); a codegen step compiles them into a typed data layer for the Electron main
@@ -25,7 +25,7 @@ memory.
 
 It is **not** the right home for:
 
-- **Anything the user authored.** Collections, requests, environments, folders and `bruno.json` live
+- **Anything the user authored.** Collections, requests, environments, folders and `nats.json` live
   on disk as `.bru`/`.yml` — see `.claude/rules/dsl-changes.md`. Never mirror or migrate a
   serialized field into SQLite.
 - **App preferences and small keyed state** — those are electron-store JSON files under
@@ -40,7 +40,7 @@ row names), so never let either hold the only copy of anything.
 ## Package layout
 
 ```
-packages/bruno-sqlite/
+packages/sqlite/
   migrations/<seq>_<name>.ts   authored — exports up()/down() returning SQL
   statements/*.sql             authored — sqlc-style annotated statements
   scripts/                     codegen (generate-artifacts), new-migration, verify-migrations,
@@ -52,8 +52,8 @@ packages/bruno-sqlite/
   tests/node
 ```
 
-**`@usebruno/sqlite` (= `/node`) is main-process only** (it imports `node:sqlite`, `node:fs`,
-`node:crypto`); never import it from the renderer. The package has zero internal `@usebruno/*`
+**`@nats/sqlite` (= `/node`) is main-process only** (it imports `node:sqlite`, `node:fs`,
+`node:crypto`); never import it from the renderer. The package has zero internal `@nats/*`
 dependencies and must stay that way.
 
 `src/generated/` is produced from the authored migration and `.sql` files by `npm run generate`
@@ -62,7 +62,7 @@ dependencies and must stay that way.
 ## Adding a migration
 
 ```bash
-npm run migration:new --workspace=packages/bruno-sqlite    # prompts for a name
+npm run migration:new --workspace=packages/sqlite    # prompts for a name
 ```
 
 This scaffolds `migrations/<7-digit sequence>_<name>.ts` exporting `up` and `down`, each returning
@@ -96,13 +96,13 @@ throwaway `VACUUM INTO` copy and then prepares every statement against the resul
 
 ```bash
 cp .env.example .env    # set DB_PATH to an absolute path to a real bruno.db
-npm run migration:verify --workspace=packages/bruno-sqlite
+npm run migration:verify --workspace=packages/sqlite
 ```
 
 `SCHEMA.md` documents the resulting schema: a Mermaid ER diagram plus each table's columns, keys and
 indexes, produced by applying every migration to an empty in-memory database. The pre-commit hook
 regenerates and stages it whenever a file under `migrations/` is staged; run
-`npm run schema --workspace=packages/bruno-sqlite` to regenerate it by hand. Never edit it directly.
+`npm run schema --workspace=packages/sqlite` to regenerate it by hand. Never edit it directly.
 
 ## Adding statements
 
@@ -134,7 +134,7 @@ INSERT INTO users (name, email) VALUES (@name, @email);
 
 ## Main process
 
-`packages/bruno-electron/src/services/sqlite/index.js` owns the single database instance:
+`packages/electron/src/services/sqlite/index.js` owns the single database instance:
 `openDatabase()` calls `createDatabase` on `bruno.db` and starts a background `files.collect()`; the
 service exposes `getStatements()`, `getFiles()` (the SDK's file store — see the package README),
 `transaction(callback)`, `reclaimDiskSpace()` and `shutdown()`. It never hands out the `DB` itself,
@@ -175,7 +175,7 @@ tight loop.
 ## Exposing a statement to the renderer
 
 Only statements the renderer actually needs are exposed, each with its own hand-written
-`ipcMain.handle` in `packages/bruno-electron/src/ipc/sqlite.js`. `registerSqliteIpc()` is called in
+`ipcMain.handle` in `packages/electron/src/ipc/sqlite.js`. `registerSqliteIpc()` is called in
 `index.js` right after `openDatabase()`; each handler calls the service's `getStatements()` per
 invocation, so a call after shutdown hits the stub, not a closed database.
 
@@ -205,12 +205,12 @@ ipcMain.handle('datastore:runner_responses:get_runner_response', (_event, params
 
 ```bash
 npm run build:bruno-sqlite                          # generate + rollup (from the repo root)
-npm run watch --workspace=packages/bruno-sqlite     # rebuild on change
-npm run test  --workspace=packages/bruno-sqlite     # jest; sets --experimental-sqlite for you
+npm run watch --workspace=packages/sqlite     # rebuild on change
+npm run test  --workspace=packages/sqlite     # jest; sets --experimental-sqlite for you
 ```
 
 `npm run dev` does **not** rebuild this package, and bruno-electron consumes its `dist/` — after
-editing anything under `packages/bruno-sqlite`, rebuild or run the watcher or the app keeps the old
+editing anything under `packages/sqlite`, rebuild or run the watcher or the app keeps the old
 statements. Run the tests through the npm script: bare `jest` misses the
 `NODE_OPTIONS="--experimental-sqlite"` the repo's Node needs for `node:sqlite`.
 
@@ -225,4 +225,4 @@ statements. Run the tests through the npm script: bare `jest` misses the
 - [ ] Each statement the renderer needs has its own `ipcMain.handle` on
       `datastore:<statement_file>:<statement_name>`; renderer access goes through a named hook
 - [ ] Package rebuilt (`npm run build:bruno-sqlite`) before testing in the app
-- [ ] `npm run test --workspace=packages/bruno-sqlite` plus the affected app/electron specs
+- [ ] `npm run test --workspace=packages/sqlite` plus the affected app/electron specs

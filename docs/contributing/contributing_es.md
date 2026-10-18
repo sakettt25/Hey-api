@@ -58,7 +58,7 @@ npm run build:bruno-converters
 npm run build:bruno-requests
 
 # empaquetar bibliotecas JavaScript del entorno de pruebas aislado
-npm run sandbox:bundle-libraries --workspace=packages/bruno-js
+npm run sandbox:bundle-libraries --workspace=packages/js
 ```
 
 ##### Opción 2
@@ -126,34 +126,34 @@ find . -type f -name "package-lock.json" -delete
 
 ```bash
 # ejecutar pruebas de bruno-app
-npm run test --workspace=packages/bruno-app
+npm run test --workspace=packages/app
 
 # ejecutar pruebas de bruno-electron
-npm run test --workspace=packages/bruno-electron
+npm run test --workspace=packages/electron
 
 # ejecutar pruebas de bruno-cli
-npm run test --workspace=packages/bruno-cli
+npm run test --workspace=packages/cli
 
 # ejecutar pruebas de bruno-common
-npm run test --workspace=packages/bruno-common
+npm run test --workspace=packages/common
 
 # ejecutar pruebas de bruno-converters
-npm run test --workspace=packages/bruno-converters
+npm run test --workspace=packages/converters
 
 # ejecutar pruebas de bruno-schema
-npm run test --workspace=packages/bruno-schema
+npm run test --workspace=packages/schema
 
 # ejecutar pruebas de bruno-query
-npm run test --workspace=packages/bruno-query
+npm run test --workspace=packages/query
 
 # ejecutar pruebas de bruno-js
-npm run test --workspace=packages/bruno-js
+npm run test --workspace=packages/js
 
 # ejecutar pruebas de bruno-lang
-npm run test --workspace=packages/bruno-lang
+npm run test --workspace=packages/lang
 
 # ejecutar pruebas de bruno-toml
-npm run test --workspace=packages/bruno-toml
+npm run test --workspace=packages/toml
 ```
 #### Pruebas en conjunto
 

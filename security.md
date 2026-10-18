@@ -8,7 +8,7 @@ Only the latest released version of Hey API receives security fixes.
 
 Please do **not** open a public GitHub issue for security vulnerabilities.
 
-Report security issues by emailing the maintainers directly or by opening a [GitHub Security Advisory](https://github.com/hey-api/hey-api/security/advisories/new) (private disclosure).
+Report security issues by emailing the maintainers directly or by opening a [GitHub Security Advisory](https://github.com/sakettt25/Hey-api/security/advisories/new) (private disclosure).
 
 Include:
 - A clear description of the vulnerability

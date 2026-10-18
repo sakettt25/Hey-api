@@ -15,11 +15,11 @@ vars:pre-request {
 `;
 
 const restoreCollectionFixture = (collectionFixturePath: string) => {
-  const collectionBru = path.join(collectionFixturePath, 'collection.bru');
+  const collectionBru = path.join(collectionFixturePath, 'collection.nats');
   fs.writeFileSync(collectionBru, COLLECTION_FILE_ORIGINAL, 'utf8');
 };
 
-test.describe.serial('bru.deleteCollectionVar(name) - removes var from collection.bru', () => {
+test.describe.serial('bru.deleteCollectionVar(name) - removes var from collection.nats', () => {
   test.afterEach(async ({ collectionFixturePath }) => {
     if (collectionFixturePath) {
       restoreCollectionFixture(collectionFixturePath);
@@ -31,7 +31,7 @@ test.describe.serial('bru.deleteCollectionVar(name) - removes var from collectio
     collectionFixturePath,
     restartApp
   }) => {
-    const collectionBruPath = path.join(collectionFixturePath!, 'collection.bru');
+    const collectionBruPath = path.join(collectionFixturePath!, 'collection.nats');
     const locators = buildCommonLocators(page);
 
     // Sanity: fixture starts with existingCollVar present.
@@ -41,7 +41,7 @@ test.describe.serial('bru.deleteCollectionVar(name) - removes var from collectio
     await page.getByText('api-deleteCollectionVar', { exact: true }).click();
     await sendRequest(page, 200);
 
-    // Pre-restart: collection.bru no longer contains existingCollVar.
+    // Pre-restart: collection.nats no longer contains existingCollVar.
     await expect.poll(() => fs.readFileSync(collectionBruPath, 'utf8'), { timeout: 5000 })
       .not.toMatch(/existingCollVar/);
 

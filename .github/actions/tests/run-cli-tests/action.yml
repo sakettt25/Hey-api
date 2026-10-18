@@ -14,33 +14,33 @@ runs:
   steps:
     - name: Install Test Collection Dependencies
       shell: ${{ inputs.shell }}
-      run: npm ci --prefix packages/bruno-tests/collection
+      run: npm ci --prefix packages/tests/collection
 
     - name: Install additional-context-root-lib Dependencies
       shell: ${{ inputs.shell }}
-      run: npm ci --prefix packages/bruno-tests/additional-context-root-lib
+      run: npm ci --prefix packages/tests/additional-context-root-lib
 
     - name: Run Local Testbench and CLI Tests
       if: inputs.shell != 'pwsh'
       shell: ${{ inputs.shell }}
       run: |
-        npm start --workspace=packages/bruno-tests &
+        npm start --workspace=packages/tests &
         sleep 5
-        cd packages/bruno-tests/collection
+        cd packages/tests/collection
         EXTRA_ARGS=""
         if [ "${{ inputs.experimental_cache_modules }}" = "true" ]; then
           EXTRA_ARGS="--experimental-cache-modules"
         fi
-        node ../../bruno-cli/bin/bru.js run --env Prod --output junit.xml --format junit --sandbox developer $EXTRA_ARGS
+        node ../../cli/bin/bru.js run --env Prod --output junit.xml --format junit --sandbox developer $EXTRA_ARGS
         cd ../safe-mode
-        node ../../bruno-cli/bin/bru.js run --env Prod --output junit.xml --format junit
+        node ../../cli/bin/bru.js run --env Prod --output junit.xml --format junit
 
     - name: Run Local Testbench and CLI Tests - Windows
       if: inputs.shell == 'pwsh'
       shell: pwsh
       run: |
         $process = Start-Process "npm.cmd" `
-          -ArgumentList "start","--workspace=packages/bruno-tests" `
+          -ArgumentList "start","--workspace=packages/tests" `
           -NoNewWindow `
           -PassThru
 
@@ -51,13 +51,13 @@ runs:
           exit 1
         }
 
-        cd packages/bruno-tests/collection
+        cd packages/tests/collection
         $bruArgs = @("run", "--env", "Prod", "--output", "junit.xml", "--format", "junit", "--sandbox", "developer")
         if ("${{ inputs.experimental_cache_modules }}" -eq "true") {
           $bruArgs += "--experimental-cache-modules"
         }
-        & node ../../bruno-cli/bin/bru.js @bruArgs
+        & node ../../cli/bin/bru.js @bruArgs
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
         cd ../safe-mode
-        & node ../../bruno-cli/bin/bru.js run --env Prod --output junit.xml --format junit
+        & node ../../cli/bin/bru.js run --env Prod --output junit.xml --format junit

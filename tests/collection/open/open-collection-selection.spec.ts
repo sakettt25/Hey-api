@@ -11,7 +11,7 @@ const writeCollection = (dir: string, name: string) => {
 const writeBrunoJsonCollection = (dir: string, name: string) => {
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(
-    path.join(dir, 'bruno.json'),
+    path.join(dir, 'nats.json'),
     JSON.stringify({ version: '1', name, type: 'collection' }, null, 2)
   );
 };
@@ -78,7 +78,7 @@ test.describe('Open Collection - selection flow', () => {
     await closeAllCollections(page);
   });
 
-  test('opens a bruno.json collection directly', async ({ page, electronApp, createTmpDir }) => {
+  test('opens a nats.json collection directly', async ({ page, electronApp, createTmpDir }) => {
     const locators = buildCommonLocators(page);
     const dir = await createTmpDir('bruno-json');
     writeBrunoJsonCollection(dir, 'Bruno JSON Collection');
@@ -91,7 +91,7 @@ test.describe('Open Collection - selection flow', () => {
     await closeAllCollections(page);
   });
 
-  test('shows the selection modal for a nested bruno.json collection', async ({ page, electronApp, createTmpDir }) => {
+  test('shows the selection modal for a nested nats.json collection', async ({ page, electronApp, createTmpDir }) => {
     const locators = buildCommonLocators(page);
     const base = await createTmpDir('nested-bruno-json');
     writeBrunoJsonCollection(path.join(base, 'nested'), 'Nested JSON Collection');
@@ -272,7 +272,7 @@ test.describe('Open Collection - selection flow', () => {
     await openViaSidebar(page);
 
     await expect(
-      page.getByText('No Bruno collections found. Couldn\'t find a bruno.json or opencollection.yml')
+      page.getByText('No Bruno collections found. Couldn\'t find a nats.json or opencollection.yml')
     ).toBeVisible();
     await expect(openCollectionModal(page)).toHaveCount(0);
   });

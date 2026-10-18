@@ -1,5 +1,5 @@
-import { stringifyRequest, stringifyCollection, stringifyFolder } from '@usebruno/filestore';
-import type { BrunoItem } from '@usebruno/schema-types';
+import { stringifyRequest, stringifyCollection, stringifyFolder } from '@nats/filestore';
+import type { BrunoItem } from '@nats/schema-types';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -40,15 +40,15 @@ export function generateCollection({
   requestsPerFolder = 10
 }: GenerateCollectionOptions) {
   if (format === 'bru') {
-    fs.writeFileSync(path.join(dir, 'bruno.json'), JSON.stringify({ version: '1', name, type: 'collection' }, null, 2));
-    fs.writeFileSync(path.join(dir, 'collection.bru'), stringifyCollection({ name } as any, {}, { format: 'bru' }) || `meta {\n  name: ${name}\n}\n`);
+    fs.writeFileSync(path.join(dir, 'nats.json'), JSON.stringify({ version: '1', name, type: 'collection' }, null, 2));
+    fs.writeFileSync(path.join(dir, 'collection.nats'), stringifyCollection({ name } as any, {}, { format: 'bru' }) || `meta {\n  name: ${name}\n}\n`);
   } else {
     const ymlContent = stringifyCollection({ name } as any, { name, type: 'collection', opencollection: '1.0.0' }, { format: 'yml' });
     fs.writeFileSync(path.join(dir, 'opencollection.yml'), ymlContent);
   }
 
   const ext = format === 'bru' ? 'bru' : 'yml';
-  const folderFile = format === 'bru' ? 'folder.bru' : 'folder.yml';
+  const folderFile = format === 'bru' ? 'folder.nats' : 'folder.yml';
   const folderCount = Math.ceil(requestCount / requestsPerFolder);
 
   Array.from({ length: folderCount }).forEach((_, f) => {

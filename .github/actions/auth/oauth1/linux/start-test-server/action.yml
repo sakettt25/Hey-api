@@ -8,7 +8,7 @@ runs:
       run: |
         set -euo pipefail
 
-        cd packages/bruno-tests
+        cd packages/tests
 
         echo "starting test server in background"
         node src/index.js &

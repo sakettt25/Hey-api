@@ -8,7 +8,7 @@ import { listRequestFiles, findCollectionDir } from '../utils';
 const seedFolder = (collectionDir: string, folderName: string) => {
   const dir = path.join(collectionDir, folderName);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'folder.bru'), `meta {\n  name: ${folderName}\n  seq: 1\n}\n`);
+  fs.writeFileSync(path.join(dir, 'folder.nats'), `meta {\n  name: ${folderName}\n  seq: 1\n}\n`);
 };
 
 test.describe('Naming collisions - drag/drop folder', () => {

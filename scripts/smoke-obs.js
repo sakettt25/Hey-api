@@ -1,5 +1,5 @@
-const p = require('../packages/bruno-electron/src/services/observability/parser');
-const r = require('../packages/bruno-electron/src/services/observability/redactor');
+const p = require('../packages/electron/src/services/observability/parser');
+const r = require('../packages/electron/src/services/observability/redactor');
 
 const samples = [
   '2024-01-02 15:04:05.123  INFO 12345 --- [main] com.pkg.UserService : User logged in',

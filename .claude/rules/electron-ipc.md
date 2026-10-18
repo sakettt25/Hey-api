@@ -1,11 +1,11 @@
 ---
 paths:
-  - "packages/bruno-electron/**/*"
+  - "packages/electron/**/*"
 ---
 
 # Electron Main Process Guide
 
-The main process (`packages/bruno-electron/src/index.js`) owns the filesystem, network, child
+The main process (`packages/electron/src/index.js`) owns the filesystem, network, child
 processes, and all electron-store data. The renderer reaches it **only** over IPC through the
 preload bridge — there is no direct Node access in the renderer despite `nodeIntegration: true`
 (see Security below). Before adding or changing any IPC, read this file plus the target

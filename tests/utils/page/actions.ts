@@ -1,5 +1,5 @@
 import { test, expect, Page, Locator, ElectronApplication, waitForReadyPage as waitForReadyPageImpl } from '../../../playwright';
-import { collectionSlug } from '../../../packages/bruno-app/src/utils/collections/collectionSlug';
+import { collectionSlug } from '../../../packages/app/src/utils/collections/collectionSlug';
 import process from 'node:process';
 import * as path from 'path';
 import * as fs from 'fs';

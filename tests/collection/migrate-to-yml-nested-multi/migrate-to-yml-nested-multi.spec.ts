@@ -55,7 +55,7 @@ test.describe('Migrating one collection to yml closes its tabs and leaves other 
       expect(fs.existsSync(path.join(collectionPath, 'source-collection', 'api', 'v2', 'deep.yml'))).toBe(true);
       expect(fs.existsSync(path.join(collectionPath, 'source-collection', 'api', 'v2', 'deep.bru'))).toBe(false);
       expect(fs.existsSync(path.join(collectionPath, 'source-collection', 'api', 'users.yml'))).toBe(true);
-      expect(fs.existsSync(path.join(collectionPath, 'source-collection', 'bruno.json'))).toBe(false);
+      expect(fs.existsSync(path.join(collectionPath, 'source-collection', 'nats.json'))).toBe(false);
       expect(fs.existsSync(path.join(collectionPath, 'source-collection', 'opencollection.yml'))).toBe(true);
     });
 
@@ -79,7 +79,7 @@ test.describe('Migrating one collection to yml closes its tabs and leaves other 
 
     await test.step('The other collection is untouched by the migration', async () => {
       expect(fs.existsSync(path.join(collectionPath, 'other-collection', 'keep-req.bru'))).toBe(true);
-      expect(fs.existsSync(path.join(collectionPath, 'other-collection', 'bruno.json'))).toBe(true);
+      expect(fs.existsSync(path.join(collectionPath, 'other-collection', 'nats.json'))).toBe(true);
 
       await loc.sidebar.collection('keep-open').click();
       await expect(loc.tabs.requestTab('Keep Me')).toBeVisible();

@@ -5,7 +5,7 @@ paths:
 
 # Dependency Boundaries
 
-Internal `@usebruno/*` dependencies (from each `package.json`) form a strict DAG. **New code must
+Internal `@nats/*` dependencies (from each `package.json`) form a strict DAG. **New code must
 respect it** — a cyclic or upward dependency is an architectural bug, not a convenience.
 
 The full monorepo map (build tools, request pipeline, sandbox, file formats, core data-model
@@ -14,7 +14,7 @@ it before non-trivial cross-package or architectural work.
 
 ## Dependency direction & ownership boundaries
 
-- **Leaf libs — zero internal `@usebruno/*` deps:** bruno-common, bruno-lang, bruno-query,
+- **Leaf libs — zero internal `@nats/*` deps:** bruno-common, bruno-lang, bruno-query,
   bruno-requests, bruno-graphql-docs, bruno-schema, bruno-schema-types, bruno-toml, bruno-sqlite
   (a leaf, but *not* platform-neutral — see guardrail 6).
 - **Mid consumers:** bruno-js → (common, query); bruno-converters → (common, schema; schema-types
@@ -28,7 +28,7 @@ Guardrails this enforces:
 1. **bruno-common is the browser-safe base leaf.** It runs in the web renderer (`bruno-app`), not
    just Node, so it must stay platform-neutral: no Node built-ins (`fs`, `path`, `os`, `crypto`,
    `child_process`, `node:*`) and no dependency that itself pulls in Node. It currently ships with
-   zero runtime dependencies — keep it that way. It also depends on no other `@usebruno/*` package;
+   zero runtime dependencies — keep it that way. It also depends on no other `@nats/*` package;
    a util that needs Node or another bruno package belongs in a different package.
 2. **No shared/library package may import bruno-app or bruno-electron.** Renderer- or
    Electron-specific code must not be pushed down into a lib to make it importable upward.
@@ -38,9 +38,9 @@ Guardrails this enforces:
 4. **bruno-schema-types is types-only** (a *devDependency* of converters/filestore, built with
    plain `tsc`). Import types from it; never add runtime code or a runtime import of it.
 5. **bruno-schema (Yup) and bruno-schema-types (TS types) are distinct and both live.** app +
-   converters use `@usebruno/schema` for runtime validation; filestore + converters use
-   `@usebruno/schema-types` for compile-time types. A data-model change usually touches both.
-6. **bruno-sqlite is main-process only.** `@usebruno/sqlite` (= `/node`) imports `node:sqlite`,
+   converters use `@nats/schema` for runtime validation; filestore + converters use
+   `@nats/schema-types` for compile-time types. A data-model change usually touches both.
+6. **bruno-sqlite is main-process only.** `@nats/sqlite` (= `/node`) imports `node:sqlite`,
    `node:fs` and `node:crypto`; importing it from the renderer breaks the bundle. The renderer
    reaches statements only through the per-statement IPC handlers in bruno-electron. See
    `.claude/rules/sqlite.md`.

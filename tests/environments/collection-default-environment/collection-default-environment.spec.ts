@@ -19,7 +19,7 @@ test.describe('Collection Default Environment', () => {
     const { environment } = buildCommonLocators(page);
 
     // Fresh userData, no saved selection for this collection path, so the default
-    // environment configured in bruno.json (presets.defaultEnvironment: "prod")
+    // environment configured in nats.json (presets.defaultEnvironment: "prod")
     // is selected automatically when the collection is opened.
     await test.step('Open collection with configured default', async () => {
       await openCollection(page, 'collection-default-environment');

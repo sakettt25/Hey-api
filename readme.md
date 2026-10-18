@@ -22,7 +22,7 @@ Hey API is a community-driven fork of Bruno, built for developers who want a fas
 ## Features
 
 - **HTTP, gRPC, WebSocket, GraphQL** — all request types in one tool
-- **Local file storage** — collections saved as `.bru` or `.yml` files you can commit to Git
+- **Local file storage** — collections saved as `.nats` or `.yml` files you can commit to Git
 - **Environments** — local, development, staging, production with secret masking
 - **Pre/post-request scripts** — JavaScript sandbox (QuickJS for safe mode, Node VM for developer mode)
 - **Assertions and tests** — request-level test blocks with Chai assertions
@@ -40,14 +40,14 @@ Hey API is a community-driven fork of Bruno, built for developers who want a fas
 
 ### Download
 
-Builds for macOS (Intel + Apple Silicon), Windows (x64 + ARM), and Linux (AppImage, deb, rpm) are available from the [Releases](https://github.com/hey-api/hey-api/releases) page.
+Builds for macOS (Intel + Apple Silicon), Windows (x64 + ARM), and Linux (AppImage, deb, rpm) are available from the [Releases](https://github.com/sakettt25/Hey-api/releases) page.
 
 ### Build from source
 
 ```sh
 # Clone the repository
-git clone https://github.com/hey-api/hey-api.git
-cd hey-api
+git clone https://github.com/sakettt25/Hey-api.git
+cd Hey-api
 
 # Install dependencies (Node.js 20+ required)
 npm install
@@ -59,16 +59,16 @@ npm run dev
 ### CLI
 
 ```sh
-npm install -g @usebruno/cli
+npm install -g @nats/cli
 
 # Run a collection
-bru run
+nats run
 
 # Run a specific request
-bru run requests/my-request.bru
+nats run requests/my-request.nats
 
 # Run against an environment
-bru run --env staging
+nats run --env staging
 ```
 
 ---
@@ -76,7 +76,7 @@ bru run --env staging
 ## Quick Start
 
 1. Open Hey API.
-2. Click **Open Collection** and select a folder containing `.bru` or `.yml` files, or create a new collection.
+2. Click **Open Collection** and select a folder containing `.nats` or `.yml` files, or create a new collection.
 3. Add a request: right-click the collection → **New Request**.
 4. Enter a URL, set headers and body as needed, and press **Send** (or `Cmd/Ctrl+Enter`).
 5. Inspect the response in the panel below.
@@ -85,7 +85,7 @@ bru run --env staging
 
 ## Collections and Environments
 
-Collections are directories on your filesystem. Each request is a `.bru` or `.yml` file you can read and edit in any text editor, diff in Git, and commit like any other source file.
+Collections are directories on your filesystem. Each request is a `.nats` or `.yml` file you can read and edit in any text editor, diff in Git, and commit like any other source file.
 
 Environments are stored in the `environments/` subdirectory of a collection. Secret variables are encrypted at rest using OS keychain (macOS/Windows) or AES-256 with a machine-derived key (Linux fallback). **Secrets are never written to disk in plain text and never exported unless you explicitly choose to include them.**
 
@@ -159,23 +159,23 @@ No other background network requests are made.
 
 ```
 packages/
-  bruno-app/        React renderer (rsbuild, Redux Toolkit, styled-components)
-  bruno-electron/   Electron main process
-  bruno-js/         JS sandbox runtime (QuickJS + Node VM)
-  bruno-common/     Shared browser-safe utilities
-  bruno-converters/ Import/export converters
-  bruno-requests/   HTTP/gRPC/WebSocket request building blocks
-  bruno-filestore/  .bru / .yml serialization
-  bruno-sqlite/     Local SQLite storage (Node built-in node:sqlite)
-  bruno-query/      JSONPath query engine
-  bruno-lang/       Bru DSL grammar (ohm-js v2, arcsecond v1 legacy)
-  bruno-schema/     Yup runtime validation
-  bruno-schema-types/ TypeScript type definitions
-  bruno-graphql-docs/ GraphQL documentation generator
-  bruno-cli/        CLI runner
-  bruno-tests/      Test servers for E2E fixtures
-tests/              Playwright E2E test suite
-playwright/         Test fixtures and helpers
+  app/          React renderer (rsbuild, Redux Toolkit, styled-components)
+  electron/     Electron main process
+  js/           JS sandbox runtime (QuickJS + Node VM)
+  common/       Shared browser-safe utilities
+  converters/   Import/export converters
+  requests/     HTTP/gRPC/WebSocket request building blocks
+  filestore/    .nats / .yml serialization
+  sqlite/       Local SQLite storage (Node built-in node:sqlite)
+  query/        JSONPath query engine
+  lang/         Nats DSL grammar (ohm-js v2, arcsecond v1 legacy)
+  schema/       Yup runtime validation
+  schema-types/ TypeScript type definitions
+  graphql-docs/ GraphQL documentation generator
+  cli/          CLI runner
+  tests/        Test servers for E2E fixtures
+tests/          Playwright E2E test suite
+playwright/     Test fixtures and helpers
 ```
 
 ---
@@ -193,19 +193,19 @@ npm run dev
 npm run build:web
 
 # Build all shared packages
-npm run build:bruno-common
-npm run build:bruno-requests
-npm run build:bruno-filestore
-npm run build:bruno-sqlite
-npm run build:bruno-converters
-npm run build:bruno-query
+npm run build:common
+npm run build:requests
+npm run build:filestore
+npm run build:sqlite
+npm run build:converters
+npm run build:query
 
 # Package the Electron app
 npm run build:electron
 
 # Run unit tests
-npm test --workspace=packages/bruno-electron
-npm test --workspace=packages/bruno-js
+npm test --workspace=packages/electron
+npm test --workspace=packages/js
 
 # Run E2E tests (requires a running app build)
 npm run test:e2e

@@ -20,7 +20,7 @@ import {
  * signature can be produced, so a placeholder stands in.
  */
 
-const { TEST_EDGEGRID } = require('../../../packages/bruno-tests/src/auth/edgegrid');
+const { TEST_EDGEGRID } = require('../../../packages/tests/src/auth/edgegrid');
 const REQUEST_URL = 'http://localhost:8081/api/auth/edgegrid/resource';
 
 // The credential tokens are embedded verbatim in the header; asserting the prefix proves both

@@ -13,12 +13,12 @@ import { buildCommonLocators } from '../../utils/page/locators';
 const COLLECTION_NAME = 'folder-tags';
 
 test.describe('Folder Tags — write', () => {
-  test('holds a new folder tag as a draft, then persists it to folder.bru and cascades it', async ({
+  test('holds a new folder tag as a draft, then persists it to folder.nats and cascades it', async ({
     pageWithUserData: page,
     collectionFixturePath
   }) => {
     const locators = buildCommonLocators(page);
-    const folderBruPath = path.join(collectionFixturePath!, 'legacy', 'folder.bru');
+    const folderBruPath = path.join(collectionFixturePath!, 'legacy', 'folder.nats');
 
     await openFolderSettingsByPath(page, COLLECTION_NAME, ['legacy']);
     await selectFolderSettingsTab(page, 'settings');
@@ -34,7 +34,7 @@ test.describe('Folder Tags — write', () => {
 
     await saveFolderSettings(page);
 
-    await test.step('Saving writes both tags to folder.bru and clears the draft', async () => {
+    await test.step('Saving writes both tags to folder.nats and clears the draft', async () => {
       await expect(locators.tabs.draftIndicator()).toBeHidden();
       expect(fs.readFileSync(folderBruPath, 'utf8')).toContain('tags: [\n    wip\n    regression\n  ]');
     });

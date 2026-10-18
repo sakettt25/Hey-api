@@ -1,0 +1,81 @@
+{
+  "name": "@nats/cli",
+  "version": "1.16.0",
+  "license": "MIT",
+  "main": "src/index.js",
+  "bin": {
+    "nats": "./bin/nats.js",
+    "hey-api": "./bin/nats.js",
+    "bru": "./bin/nats.js"
+  },
+  "bugs": {
+    "url": "https://github.com/sakettt25/Hey-api/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sakettt25/Hey-api.git"
+  },
+  "keywords": [
+    "API",
+    "testing",
+    "automation",
+    "cli",
+    "command-line",
+    "bruno",
+    "HTTP requests",
+    "rest-api",
+    "api-client",
+    "api-automation",
+    "request-handling",
+    "mock-api",
+    "http-client",
+    "async",
+    "promise",
+    "javascript",
+    "nodejs",
+    "automation-tool",
+    "postman-alternative",
+    "api-scripting"
+  ],
+  "scripts": {
+    "test": "node --experimental-vm-modules $(npx which jest)",
+    "test:ci": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "readme.md",
+    "changelog.md",
+    "package.json"
+  ],
+  "dependencies": {
+    "@aws-sdk/credential-providers": "3.1019.0",
+    "aws4-axios": "^3.3.15",
+    "axios": "1.18.0",
+    "axios-ntlm": "^1.4.2",
+    "chai": "^4.3.7",
+    "chalk": "^3.0.0",
+    "cli-table3": "^0.6.5",
+    "decomment": "^0.9.5",
+    "form-data": "4.0.4",
+    "fs-extra": "^10.1.0",
+    "http-proxy-agent": "^7.0.0",
+    "https-proxy-agent": "^7.0.2",
+    "iconv-lite": "^0.6.3",
+    "js-yaml": "4.3.1",
+    "jsesc": "^3.0.2",
+    "lodash": "4.18.1",
+    "qs": "^6.15.2",
+    "socks-proxy-agent": "^8.0.2",
+    "xmlbuilder": "^15.1.1",
+    "yargs": "^17.6.2",
+    "@nats/common": "0.1.0",
+    "@nats/converters": "^0.1.0",
+    "@nats/filestore": "^0.1.0",
+    "@nats/js": "0.12.0",
+    "@nats/lang": "0.12.0",
+    "@nats/requests": "^0.1.0"
+  },
+  "author": "Saket Saurav",
+  "homepage": "https://github.com/sakettt25/Hey-api"
+}

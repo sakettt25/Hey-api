@@ -8,7 +8,7 @@ runs:
       run: |
         Set-StrictMode -Version Latest
 
-        Set-Location packages\bruno-tests
+        Set-Location packages\tests
 
         Write-Host "starting test server in background"
         Start-Process -FilePath "node" -ArgumentList "src\index.js" -PassThru -WindowStyle Hidden

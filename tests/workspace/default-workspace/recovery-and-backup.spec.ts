@@ -37,7 +37,7 @@ test.describe('Default Workspace Recovery and Backup', () => {
       const collectionPath = path.join(userDataPath, 'test-collection');
       fs.mkdirSync(collectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(collectionPath, 'bruno.json'),
+        path.join(collectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'Test', type: 'collection' })
       );
       fs.writeFileSync(
@@ -83,7 +83,7 @@ test.describe('Default Workspace Recovery and Backup', () => {
       const collectionPath = path.join(userDataPath, 'test-collection');
       fs.mkdirSync(collectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(collectionPath, 'bruno.json'),
+        path.join(collectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'Test', type: 'collection' })
       );
       fs.writeFileSync(
@@ -123,7 +123,7 @@ test.describe('Default Workspace Recovery and Backup', () => {
       const collectionPath = path.join(userDataPath, 'my-collection');
       fs.mkdirSync(collectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(collectionPath, 'bruno.json'),
+        path.join(collectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'My Collection', type: 'collection' })
       );
 
@@ -305,7 +305,7 @@ docs: ''
       const collectionPath = path.join(userDataPath, 'external-collection');
       fs.mkdirSync(collectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(collectionPath, 'bruno.json'),
+        path.join(collectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'External Collection', type: 'collection' })
       );
 
@@ -430,7 +430,7 @@ docs: ''
       const collectionPath = path.join(userDataPath, 'fallback-collection');
       fs.mkdirSync(collectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(collectionPath, 'bruno.json'),
+        path.join(collectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'Fallback Collection', type: 'collection' })
       );
 
@@ -471,7 +471,7 @@ docs: ''
       const collectionPath = path.join(userDataPath, 'old-collection');
       fs.mkdirSync(collectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(collectionPath, 'bruno.json'),
+        path.join(collectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'Old Collection', type: 'collection' })
       );
 
@@ -525,7 +525,7 @@ docs: ''
       const collectionPath = path.join(userDataPath, 'latest-collection');
       fs.mkdirSync(collectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(collectionPath, 'bruno.json'),
+        path.join(collectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'Latest Collection', type: 'collection' })
       );
 
@@ -533,7 +533,7 @@ docs: ''
       const oldCollectionPath = path.join(userDataPath, 'old-collection');
       fs.mkdirSync(oldCollectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(oldCollectionPath, 'bruno.json'),
+        path.join(oldCollectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'Old Collection', type: 'collection' })
       );
 
@@ -605,7 +605,7 @@ docs: ''
       const collectionPath = path.join(userDataPath, 'important-collection');
       fs.mkdirSync(collectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(collectionPath, 'bruno.json'),
+        path.join(collectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'Important Collection', type: 'collection' })
       );
 
@@ -702,7 +702,7 @@ variables:
       const collectionPath = path.join(userDataPath, 'persistent-collection');
       fs.mkdirSync(collectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(collectionPath, 'bruno.json'),
+        path.join(collectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'Persistent Collection', type: 'collection' })
       );
 
@@ -822,7 +822,7 @@ variables: []
       const collectionPath = path.join(userDataPath, 'shared-collection');
       fs.mkdirSync(collectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(collectionPath, 'bruno.json'),
+        path.join(collectionPath, 'nats.json'),
         JSON.stringify({ version: '1', name: 'Shared Collection', type: 'collection' })
       );
 

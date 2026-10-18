@@ -68,7 +68,7 @@ find . -type f -name "package-lock.json" -delete
 
 ```bash
 # ब्रूनो-स्कीमा परीक्षण चलाएँ
-npm test --workspace=packages/bruno-schema
+npm test --workspace=packages/schema
 
 # सभी कार्यस्थानों पर परीक्षण चलाएँ
 npm test --workspaces --if-present

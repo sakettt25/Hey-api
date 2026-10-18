@@ -71,7 +71,7 @@ find . -type f -name "package-lock.json" -delete
 
 ```bash
 # ব্রুনো-স্কিমা পরীক্ষা চালান
-npm test --workspace=packages/bruno-schema
+npm test --workspace=packages/schema
 
 # সমস্ত কর্মক্ষেত্রে পরীক্ষা চালান
 npm test --workspaces --if-present

@@ -23,7 +23,7 @@ const COLLECTION_NAME = 'folder-tags';
  * These tests only read, so they share one app instance across the file.
  */
 test.describe('Folder Tags — inheritance display', () => {
-  test('reads a folder\'s own tags from folder.bru into the Settings tab', async ({ pageWithUserData: page }) => {
+  test('reads a folder\'s own tags from folder.nats into the Settings tab', async ({ pageWithUserData: page }) => {
     const locators = buildCommonLocators(page);
 
     await openFolderSettingsByPath(page, COLLECTION_NAME, ['api']);

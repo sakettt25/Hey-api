@@ -69,7 +69,7 @@ find . -type f -name "package-lock.json" -delete
 
 ```bash
 # bruno-schema 테스트 실행
-npm test --workspace=packages/bruno-schema
+npm test --workspace=packages/schema
 
 # 모든 작업 공간에서 테스트 실행
 npm test --workspaces --if-present

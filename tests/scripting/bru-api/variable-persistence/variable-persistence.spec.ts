@@ -41,8 +41,8 @@ test.describe('Script variable persistence to disk (developer mode)', () => {
       }, { timeout: PERSISTENCE_TIMEOUT }).toBe(true);
     });
 
-    await test.step('Verify collection var persisted to collection.bru', async () => {
-      const collectionBruPath = path.join(collectionFixturePath!, 'variable-persistence-test', 'collection.bru');
+    await test.step('Verify collection var persisted to collection.nats', async () => {
+      const collectionBruPath = path.join(collectionFixturePath!, 'variable-persistence-test', 'collection.nats');
       await expect.poll(() => {
         const content = fs.readFileSync(collectionBruPath, 'utf8');
         return content.includes('persistedCollectionToken') && content.includes('collection-value-456');

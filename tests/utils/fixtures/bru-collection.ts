@@ -20,27 +20,27 @@ export interface WriteRequestOptions {
   examples?: string[];
 }
 
-/** Create the collection directory + `bruno.json` (the marker that makes a dir a Bruno collection). */
+/** Create the collection directory + `nats.json` (the marker that makes a dir a Bruno collection). */
 export const initBruCollection = (dir: string, name: string) => {
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(
-    path.join(dir, 'bruno.json'),
+    path.join(dir, 'nats.json'),
     JSON.stringify({ version: '1', name, type: 'collection' }, null, 2)
   );
 };
 
-/** Create a folder subdir + its `folder.bru` meta. Returns the folder's path. */
+/** Create a folder subdir + its `folder.nats` meta. Returns the folder's path. */
 export const writeBruFolder = (dir: string, name: string, seq: number) => {
   const folderDir = path.join(dir, name);
   fs.mkdirSync(folderDir, { recursive: true });
-  fs.writeFileSync(path.join(folderDir, 'folder.bru'), `meta {\n  name: ${name}\n  seq: ${seq}\n}\n`);
+  fs.writeFileSync(path.join(folderDir, 'folder.nats'), `meta {\n  name: ${name}\n  seq: ${seq}\n}\n`);
   return folderDir;
 };
 
 /**
  * Write an HTTP request `.bru`, optionally with saved response examples. The `example { ... }`
  * block shape matches the bru serializer output (see
- * packages/bruno-lang/v2/tests/examples/fixtures/bru/bruToJson-single-example.bru).
+ * packages/lang/v2/tests/examples/fixtures/bru/bruToJson-single-example.bru).
  */
 export const writeBruRequest = (dir: string, name: string, options: WriteRequestOptions) => {
   const { seq, method = 'get', url = 'https://httpbin.org/get', examples = [] } = options;

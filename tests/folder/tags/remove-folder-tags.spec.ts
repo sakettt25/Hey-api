@@ -13,12 +13,12 @@ import { buildCommonLocators } from '../../utils/page/locators';
 const COLLECTION_NAME = 'folder-tags';
 
 test.describe('Folder Tags — remove', () => {
-  test('drops the tags key from folder.bru when the last tag is removed', async ({
+  test('drops the tags key from folder.nats when the last tag is removed', async ({
     pageWithUserData: page,
     collectionFixturePath
   }) => {
     const locators = buildCommonLocators(page);
-    const folderBruPath = path.join(collectionFixturePath!, 'legacy', 'folder.bru');
+    const folderBruPath = path.join(collectionFixturePath!, 'legacy', 'folder.nats');
 
     await openFolderSettingsByPath(page, COLLECTION_NAME, ['legacy']);
     await selectFolderSettingsTab(page, 'settings');

@@ -178,7 +178,7 @@ for (const mode of ['safe', 'developer'] as const) {
         await expect(responseErrorsLocators.title(card)).toContainText('Pre-Request Script Error');
         await expect(responseErrorsLocators.sourceLabel(card)).toContainText('Folder');
         await expect(responseErrorsLocators.sourceLabel(card)).toContainText('error-subfolder');
-        await expect(responseErrorsLocators.filePath(card)).toContainText('folder.bru');
+        await expect(responseErrorsLocators.filePath(card)).toContainText('folder.nats');
         await expect(responseErrorsLocators.message(card)).toContainText('ReferenceError');
         await expect(responseErrorsLocators.message(card)).toContainText('folderUndefinedVar');
         await expect(responseErrorsLocators.errorLine(card)).toContainText('folderUndefinedVar');
@@ -217,7 +217,7 @@ for (const mode of ['safe', 'developer'] as const) {
         const card = responseErrorsLocators.card();
         await expect(responseErrorsLocators.title(card)).toContainText('Pre-Request Script Error');
         await expect(responseErrorsLocators.sourceLabel(card)).toContainText('Collection');
-        await expect(responseErrorsLocators.filePath(card)).toContainText('collection.bru');
+        await expect(responseErrorsLocators.filePath(card)).toContainText('collection.nats');
         await expect(responseErrorsLocators.message(card)).toContainText('ReferenceError');
         await expect(responseErrorsLocators.message(card)).toContainText('collectionUndefinedVar');
         await expect(responseErrorsLocators.errorLine(card)).toContainText('collectionUndefinedVar');

@@ -11,7 +11,7 @@ non-trivial cross-package or architectural work. The dependency DAG and ownershi
 
 ```
 packages/
-  bruno-app/          React renderer (rsbuild, Redux Toolkit, styled-components)   [name @usebruno/app]
+  bruno-app/          React renderer (rsbuild, Redux Toolkit, styled-components)   [name @nats/app]
   bruno-electron/     Electron main process (electron-builder)                     [name "bruno" — NOT scoped]
   bruno-js/           JS sandbox for user scripts (QuickJS + node:vm)
   bruno-common/       Shared utilities — the base leaf (rollup → dist/cjs+esm)
@@ -27,7 +27,7 @@ packages/
   bruno-toml/         Thin wrapper over @iarna/toml (orphaned — on no live data path)
   bruno-cli/          Command-line runner (run straight from src/)
   bruno-tests/        Test servers (express: HTTP/HTTPS/proxy/GraphQL)
-  bruno-docs/         @usebruno/docs — placeholder stub (only package.json + readme, no src/)
+  bruno-docs/         @nats/docs — placeholder stub (only package.json + readme, no src/)
 tests/                Playwright e2e tests
 playwright/           Test fixtures and helpers (index.ts)
 ```
@@ -48,19 +48,19 @@ bruno-schema-types. Editing bruno-js / bruno-lang / bruno-schema / bruno-toml ne
 
 ## Dependency direction & ownership boundaries
 
-The internal `@usebruno/*` dependency DAG and the guardrails that protect it (bruno-common
+The internal `@nats/*` dependency DAG and the guardrails that protect it (bruno-common
 browser-safe, bruno-js Electron-free, schema vs schema-types, no upward imports) are the
 auto-loaded rule — see `.claude/rules/architecture.md`.
 
 ## Request execution pipeline
 
 1. Renderer invokes `ipcMain.handle('send-http-request', …)` (`bruno-electron/src/ipc/network/index.js`).
-2. Variables are interpolated via `interpolate` from `@usebruno/common`
+2. Variables are interpolated via `interpolate` from `@nats/common`
    (`ipc/network/interpolate-vars.js`).
 3. Pre-request scripts run via `ScriptRuntime` (`bruno-js/src/runtime/script-runtime.js`).
 4. The request is built/sent — axios for HTTP, plus gRPC (`@grpc/grpc-js`) and WebSocket clients;
    shared building blocks (auth interceptors like `addDigestInterceptor`/`applyOAuth1ToRequest`,
-   cookies, `scripting.buildScriptedEntry`, grpc/ws helpers) come from `@usebruno/requests`.
+   cookies, `scripting.buildScriptedEntry`, grpc/ws helpers) come from `@nats/requests`.
    bruno-requests is a *library of request pieces*, not the orchestrator — orchestration lives in
    `ipc/network`.
 5. Post-response: **var extraction** via `VarsRuntime`, **tests** via `TestRuntime`, and
@@ -97,7 +97,7 @@ Any on-disk shape change → follow `.claude/rules/dsl-changes.md`.
 
 Two distinct mechanisms — pick by what the data is:
 
-- **`@usebruno/sqlite`** (`bruno.db` under `userData`) — the SDK for derived/bulky secondary state.
+- **`@nats/sqlite`** (`bruno.db` under `userData`) — the SDK for derived/bulky secondary state.
   Migrations (`migrations/*.ts`) and statements (`statements/*.sql`) are authored and compiled into
   a typed layer for the main process. `services/sqlite` owns the DB, and `ipc/sqlite.js` exposes
   selected statements to the renderer, one hand-written handler per statement on
@@ -118,7 +118,7 @@ Read the directory for the current set: `App/`, `ReduxStore/`, `Theme/`, `Hotkey
 
 ## Key types (`bruno-schema-types`)
 
-Core types live in `packages/bruno-schema-types/src/` — read them for the current shapes. The
+Core types live in `packages/schema-types/src/` — read them for the current shapes. The
 top-level request is a union: `Request = HttpRequest | GrpcRequest | WebSocketRequest`
 (`requests/index.ts`); code that handles "a request" must account for all three. Other central
 types: `Collection` (`collection/collection.ts`), `Item` (request or folder, discriminated by

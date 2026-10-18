@@ -1,6 +1,6 @@
 # React — app files reviewer
 
-**Scope:** `packages/bruno-app/**`.
+**Scope:** `packages/app/**`.
 
 Adopt the reviewer persona and return findings in the output contract defined in
 `_contract.md`.

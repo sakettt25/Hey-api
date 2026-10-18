@@ -26,7 +26,7 @@ test.describe('Script-driven typed variable persistence to disk (developer mode)
     });
 
     const envFilePath = path.join(collectionFixturePath!, COLLECTION_NAME, 'environments', 'Test.bru');
-    const collectionBruPath = path.join(collectionFixturePath!, COLLECTION_NAME, 'collection.bru');
+    const collectionBruPath = path.join(collectionFixturePath!, COLLECTION_NAME, 'collection.nats');
 
     await test.step('environments/Test.bru contains @number/@boolean/@object annotations for env vars', async () => {
       await expect.poll(() => {
@@ -41,7 +41,7 @@ test.describe('Script-driven typed variable persistence to disk (developer mode)
       }, { timeout: PERSISTENCE_TIMEOUT }).toBe(true);
     });
 
-    await test.step('collection.bru contains @number/@boolean/@object annotations for collection vars', async () => {
+    await test.step('collection.nats contains @number/@boolean/@object annotations for collection vars', async () => {
       await expect.poll(() => {
         const content = fs.readFileSync(collectionBruPath, 'utf8');
         return (

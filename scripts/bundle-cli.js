@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-// pack a self-contained tarball of @usebruno/cli that installs offline
+// pack a self-contained tarball of @nats/cli that installs offline
 // - npm pack all workspace packages into tarballs/
 // - stage cli without node_modules, patch package.json to use local tarballs
 // - npm install in stage, then npm pack the whole thing

@@ -1,5 +1,5 @@
 import { Locator, Page, expect, test } from '../../../../playwright';
-import { collectionSlug } from '../../../../packages/bruno-app/src/utils/collections/collectionSlug';
+import { collectionSlug } from '../../../../packages/app/src/utils/collections/collectionSlug';
 
 export type EmptyStateRequestType = 'http' | 'graphql' | 'grpc' | 'websocket';
 

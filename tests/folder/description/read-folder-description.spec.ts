@@ -2,7 +2,7 @@ import { test, expect } from '../../../playwright';
 import { openFolderSettings } from '../../utils/page';
 
 test.describe('Folder Settings Descriptions - Read', () => {
-  test('reads descriptions from headers and vars in a pre-existing folder.bru', async ({
+  test('reads descriptions from headers and vars in a pre-existing folder.nats', async ({
     pageWithUserData: page
   }) => {
     test.setTimeout(30_000);

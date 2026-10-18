@@ -4,7 +4,7 @@ import { test, expect } from '../../../playwright';
 import { openFolderSettings, setTableRowDescriptionValue } from '../../utils/page';
 
 test.describe('Folder Settings Descriptions - Write (Vars)', () => {
-  test('writes a multiline description to a pre-request var and persists it to folder.bru', async ({
+  test('writes a multiline description to a pre-request var and persists it to folder.nats', async ({
     pageWithUserData: page,
     collectionFixturePath
   }) => {
@@ -30,7 +30,7 @@ test.describe('Folder Settings Descriptions - Write (Vars)', () => {
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('Folder Settings saved successfully')).toBeVisible({ timeout: 5000 });
 
-    const folderBruPath = path.join(collectionFixturePath!, 'api', 'folder.bru');
+    const folderBruPath = path.join(collectionFixturePath!, 'api', 'folder.nats');
     const fileContent = fs.readFileSync(folderBruPath, 'utf8');
 
     expect(fileContent).toContain('First line');

@@ -17,7 +17,7 @@ vars:pre-request {
 test.describe.serial('bru.setCollectionVar multiple persistent variables', () => {
   test.afterEach(async ({ collectionFixturePath }) => {
     if (collectionFixturePath) {
-      const collectionBru = path.join(collectionFixturePath, 'collection.bru');
+      const collectionBru = path.join(collectionFixturePath, 'collection.nats');
       fs.writeFileSync(collectionBru, COLLECTION_FILE_ORIGINAL, 'utf8');
     }
   });
@@ -42,8 +42,8 @@ test.describe.serial('bru.setCollectionVar multiple persistent variables', () =>
       await expect(locators.environment.variableValue('multiple-persist-coll-vars-key2')).toContainText('value2');
     });
 
-    await test.step('Both vars are persisted to collection.bru', async () => {
-      const collectionBruPath = path.join(collectionFixturePath!, 'collection.bru');
+    await test.step('Both vars are persisted to collection.nats', async () => {
+      const collectionBruPath = path.join(collectionFixturePath!, 'collection.nats');
       await expect.poll(() => fs.readFileSync(collectionBruPath, 'utf8'), { timeout: 10000 })
         .toMatch(/multiple-persist-coll-vars-key1:\s*value1[\s\S]*multiple-persist-coll-vars-key2:\s*value2/);
     });

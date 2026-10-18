@@ -7,7 +7,7 @@ import { buildCommonLocators } from '../../utils/page/locators';
 
 const envLocators = (page: Page) => buildCommonLocators(page).environment;
 
-// Mirrors DUPLICATE_SECRET_NAMES_ERROR in packages/bruno-app/src/utils/environments.js.
+// Mirrors DUPLICATE_SECRET_NAMES_ERROR in packages/app/src/utils/environments.js.
 const DUPLICATE_SECRET_TOAST = 'Duplicate secret names are not allowed';
 const toastByMessage = (page: Page, message: string) => buildCommonLocators(page).toast.byMessage(message);
 const varErrors = (page: Page) => envLocators(page).varErrors();

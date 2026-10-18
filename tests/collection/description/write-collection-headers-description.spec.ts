@@ -3,7 +3,7 @@ import * as path from 'path';
 import { test, expect } from '../../../playwright';
 
 test.describe('Collection Settings Descriptions - Write (Headers)', () => {
-  test('writes a multiline description to a header and persists it to collection.bru', async ({
+  test('writes a multiline description to a header and persists it to collection.nats', async ({
     pageWithUserData: page,
     collectionFixturePath
   }) => {
@@ -42,8 +42,8 @@ test.describe('Collection Settings Descriptions - Write (Headers)', () => {
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('Collection Settings saved successfully')).toBeVisible({ timeout: 5000 });
 
-    // Verify the description was written to collection.bru
-    const collectionBruPath = path.join(collectionFixturePath!, 'collection.bru');
+    // Verify the description was written to collection.nats
+    const collectionBruPath = path.join(collectionFixturePath!, 'collection.nats');
     const fileContent = fs.readFileSync(collectionBruPath, 'utf8');
 
     expect(fileContent).toContain('@description');

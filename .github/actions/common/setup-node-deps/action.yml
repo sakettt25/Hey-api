@@ -30,7 +30,7 @@ runs:
         npm run build:graphql-docs
         npm run build:bruno-query
         npm run build:bruno-common
-        npm run sandbox:bundle-libraries --workspace=packages/bruno-js
+        npm run sandbox:bundle-libraries --workspace=packages/js
         npm run build:bruno-converters
         npm run build:bruno-requests
         npm run build:schema-types

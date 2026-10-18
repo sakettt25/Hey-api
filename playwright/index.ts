@@ -3,9 +3,9 @@ import { merge } from 'lodash-es';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
-import { version } from '../packages/bruno-app/package.json';
+import { version } from '../packages/app/package.json';
 
-const electronAppPath = path.join(__dirname, '../packages/bruno-electron');
+const electronAppPath = path.join(__dirname, '../packages/electron');
 
 const PREFERENCES_FILE = 'preferences.json';
 
@@ -210,8 +210,8 @@ export const test = baseTest.extend<
   collectionFixturePath: async ({ createTmpDir }, use, testInfo) => {
     const testDir = path.dirname(testInfo.file);
     const fixturesDir = path.join(testDir, 'fixtures');
-    // fixtures/collections — multiple named collections (subdirs with bruno.json/opencollection.yml)
-    // fixtures/collection — single collection (single dir with bruno.json/opencollection.yml)
+    // fixtures/collections — multiple named collections (subdirs with nats.json/opencollection.yml)
+    // fixtures/collection — single collection (single dir with nats.json/opencollection.yml)
     const srcPath = [path.join(fixturesDir, 'collections'), path.join(fixturesDir, 'collection')]
       .find((p) => fs.existsSync(p));
 

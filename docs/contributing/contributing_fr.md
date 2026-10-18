@@ -74,7 +74,7 @@ find . -type f -name "package-lock.json" -delete
 
 ```bash
 # exécuter des tests de schéma bruno
-npm test --workspace=packages/bruno-schema
+npm test --workspace=packages/schema
 
 # exécuter des tests sur tous les espaces de travail
 npm test --workspaces --if-present

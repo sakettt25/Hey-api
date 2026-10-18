@@ -71,7 +71,7 @@ find . -type f -name "package-lock.json" -delete
 
 ```bash
 # 執行布魯諾架構測試
-npm test --workspace=packages/bruno-schema
+npm test --workspace=packages/schema
 
 # 對所有工作區執行測試
 npm test --workspaces --if-present

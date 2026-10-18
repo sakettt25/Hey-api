@@ -9,7 +9,7 @@ test.describe('Snapshot: Collection Deduplication', () => {
     const userDataPath = await createTmpDir('snap-collection-dedup');
     const colPath = await createTmpDir('col');
 
-    fs.writeFileSync(path.join(colPath, 'bruno.json'), JSON.stringify({ version: '1', name: 'TestCol', type: 'collection' }, null, 2));
+    fs.writeFileSync(path.join(colPath, 'nats.json'), JSON.stringify({ version: '1', name: 'TestCol', type: 'collection' }, null, 2));
 
     seedSnapshotWithCollections(userDataPath, [
       // Older entry: has a selected environment and an open tab, but is not marked open/mounted.
@@ -87,7 +87,7 @@ test.describe('Snapshot: Collection Deduplication', () => {
     const workspaceAPath = await createTmpDir('workspace-a');
     const workspaceBPath = await createTmpDir('workspace-b');
 
-    fs.writeFileSync(path.join(colPath, 'bruno.json'), JSON.stringify({ version: '1', name: 'TestCol', type: 'collection' }, null, 2));
+    fs.writeFileSync(path.join(colPath, 'nats.json'), JSON.stringify({ version: '1', name: 'TestCol', type: 'collection' }, null, 2));
 
     seedSnapshotWithCollections(
       userDataPath,

@@ -62,7 +62,7 @@ reviews:
           commit/PR (rename only), separate from behavioral changes.
         - When a file is converted to TypeScript, flag use of `any` used as a shortcut rather than
           a genuinely unknown/dynamic type — prefer modeling the real shape (reuse types from
-          `@usebruno/schema-types` where applicable).
+          `@nats/schema-types` where applicable).
         - Do not ask for unrelated `.js` files to be converted as part of an unrelated PR — that
           contradicts an incremental, file-at-a-time migration approach.
     - path: 'packages/**/src/**/*.{js,jsx,ts,tsx}'
@@ -81,7 +81,7 @@ reviews:
           the twin holds the same logic untouched, flag it and name the twin path. A bug fixed in
           the app is a bug still present in `bru run`.
         - Prefer unifying over duplicating. Where the logic has no Electron- or CLI-only
-          dependency, suggest moving it into `@usebruno/requests` or `@usebruno/common` rather
+          dependency, suggest moving it into `@nats/requests` or `@nats/common` rather
           than patching both copies — `utils/cookies.js` is the precedent (one line in each
           runtime, re-exporting the shared implementation).
         - Scripting API. A change to `bruno-js/src/{bru,bruno-request,bruno-response}.js` needs the
@@ -123,8 +123,8 @@ reviews:
           ├── fixtures
           │   └── collection
           │       ├── base.bru
-          │       ├── bruno.json
-          │       ├── collection.bru
+          │       ├── nats.json
+          │       ├── collection.nats
           │       ├── ws-test-request-with-headers.bru
           │       ├── ws-test-request-with-subproto.bru
           │       └── ws-test-request.bru
@@ -135,7 +135,7 @@ reviews:
           │   ├── fixtures
           │   │   └── collection
           │   │       ├── environments
-          │   │       ├── bruno.json
+          │   │       ├── nats.json
           │   │       └── ws-interpolation-test.bru
           │   ├── init-user-data
           │   └── variable-interpolation.spec.ts # <- Depends on the collection in ./variable-interpolation/fixtures/collection

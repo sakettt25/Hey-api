@@ -27,11 +27,11 @@ test.describe('Migrate collection from bru to yml format', () => {
     page.on('pageerror', (error) => pageErrors.push(error));
 
     await test.step('Verify collection is in bru format before migration', async () => {
-      expect(fs.existsSync(path.join(collectionPath, 'bruno.json'))).toBe(true);
-      expect(fs.existsSync(path.join(collectionPath, 'collection.bru'))).toBe(true);
+      expect(fs.existsSync(path.join(collectionPath, 'nats.json'))).toBe(true);
+      expect(fs.existsSync(path.join(collectionPath, 'collection.nats'))).toBe(true);
       expect(fs.existsSync(path.join(collectionPath, 'ping.bru'))).toBe(true);
       expect(fs.existsSync(path.join(collectionPath, 'post-json.bru'))).toBe(true);
-      expect(fs.existsSync(path.join(collectionPath, 'api', 'folder.bru'))).toBe(true);
+      expect(fs.existsSync(path.join(collectionPath, 'api', 'folder.nats'))).toBe(true);
       expect(fs.existsSync(path.join(collectionPath, 'api', 'get-users.bru'))).toBe(true);
       expect(fs.existsSync(path.join(collectionPath, 'environments', 'Local.bru'))).toBe(true);
       expect(fs.existsSync(path.join(collectionPath, 'environments', 'Production.bru'))).toBe(true);
@@ -61,11 +61,11 @@ test.describe('Migrate collection from bru to yml format', () => {
     });
 
     await test.step('Verify all bru files are removed from disk', async () => {
-      expect(fs.existsSync(path.join(collectionPath, 'bruno.json'))).toBe(false);
-      expect(fs.existsSync(path.join(collectionPath, 'collection.bru'))).toBe(false);
+      expect(fs.existsSync(path.join(collectionPath, 'nats.json'))).toBe(false);
+      expect(fs.existsSync(path.join(collectionPath, 'collection.nats'))).toBe(false);
       expect(fs.existsSync(path.join(collectionPath, 'ping.bru'))).toBe(false);
       expect(fs.existsSync(path.join(collectionPath, 'post-json.bru'))).toBe(false);
-      expect(fs.existsSync(path.join(collectionPath, 'api', 'folder.bru'))).toBe(false);
+      expect(fs.existsSync(path.join(collectionPath, 'api', 'folder.nats'))).toBe(false);
       expect(fs.existsSync(path.join(collectionPath, 'api', 'get-users.bru'))).toBe(false);
       expect(fs.existsSync(path.join(collectionPath, 'environments', 'Local.bru'))).toBe(false);
       expect(fs.existsSync(path.join(collectionPath, 'environments', 'Production.bru'))).toBe(false);

@@ -2,11 +2,11 @@ import { test, expect } from '../../../playwright';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import constants from '../../../packages/bruno-cli/src/constants.js';
+import constants from '../../../packages/cli/src/constants.js';
 
 test.describe('CLI JSON Environment File Support', () => {
   const collectionPath = path.resolve(__dirname, 'collection');
-  const BRU = 'node ../../../../packages/bruno-cli/bin/bru.js';
+  const BRU = 'node ../../../../packages/cli/bin/bru.js';
 
   // Helper: emulate `bru run` from a given working directory and
   // return the process exit code (0 on success). We use execSync so

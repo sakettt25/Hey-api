@@ -20,13 +20,13 @@ test.describe('Naming collisions - create collection', () => {
     await createCollection(page, 'MyColl', location, 'bru');
 
     await test.step('On disk: the pre-existing dir is untouched and a suffixed collection dir is created', async () => {
-      // The seeded directory is left as-is (no bruno.json written into it).
+      // The seeded directory is left as-is (no nats.json written into it).
       expect(fs.existsSync(path.join(location, 'MyColl', 'marker.txt'))).toBe(true);
-      expect(fs.existsSync(path.join(location, 'MyColl', 'bruno.json'))).toBe(false);
+      expect(fs.existsSync(path.join(location, 'MyColl', 'nats.json'))).toBe(false);
 
       // The new collection lands in a silently-suffixed directory.
       await expect
-        .poll(() => fs.existsSync(path.join(location, 'MyColl 1', 'bruno.json')), { timeout: 10000 })
+        .poll(() => fs.existsSync(path.join(location, 'MyColl 1', 'nats.json')), { timeout: 10000 })
         .toBe(true);
     });
   });
@@ -72,9 +72,9 @@ test.describe('Naming collisions - create collection', () => {
 
     await createCollection(page, 'MyColl', location, 'bru');
 
-    await test.step('On disk: the empty dir is reused (bruno.json written into it); no "MyColl 1" created', async () => {
+    await test.step('On disk: the empty dir is reused (nats.json written into it); no "MyColl 1" created', async () => {
       await expect
-        .poll(() => fs.existsSync(path.join(location, 'MyColl', 'bruno.json')), { timeout: 10000 })
+        .poll(() => fs.existsSync(path.join(location, 'MyColl', 'nats.json')), { timeout: 10000 })
         .toBe(true);
       expect(fs.existsSync(path.join(location, 'MyColl 1'))).toBe(false);
     });

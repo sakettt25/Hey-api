@@ -23,9 +23,9 @@ in depth.
    list it in your reply to the user (and in the PR description) with the path and why it was left
    — never leave a one-sided change unmentioned.
 4. **Prefer unifying over copying.** If the logic has no Electron- or CLI-only dependency, move it
-   into `@usebruno/requests` / `@usebruno/common` (respecting `.claude/rules/architecture.md`)
+   into `@nats/requests` / `@nats/common` (respecting `.claude/rules/architecture.md`)
    instead of patching twice. Precedent: `utils/cookies.js` is one line in each runtime —
-   `module.exports = require('@usebruno/requests').cookies;`. Where both copies must stay, note the
+   `module.exports = require('@nats/requests').cookies;`. Where both copies must stay, note the
    pairing in a comment at both sites.
 
 ## 1. App ↔ CLI — highest priority
@@ -41,7 +41,7 @@ bugs to the shared logic, not the reporting surface.
 | HTTP client, TLS, certs | `ipc/network/axios-instance.js` | `utils/axios-instance.js` |
 | Interpolation | `ipc/network/interpolate-{vars,string}.js` | `runner/interpolate-{vars,string}.js` |
 | Collection tree, `merge{Headers,Scripts,Vars,Auth}` | `utils/collection.js` | `utils/collection.js` |
-| Collection loading, `bruno.json` / `opencollection.yml` config | `utils/collection-reader.js`, `app/collection-watcher.js` | `utils/collection.js` (`getCollectionConfig`) |
+| Collection loading, `nats.json` / `opencollection.yml` config | `utils/collection-reader.js`, `app/collection-watcher.js` | `utils/collection.js` (`getCollectionConfig`) |
 | Environments & persisted vars | `utils/environments.js` | `utils/environment.js`, `utils/persist-variables.js` |
 | Proxy · OAuth 2.0 · form-data · filesystem | `utils/{proxy-util,oauth2,form-data,filesystem}.js` | `utils/{proxy-util,oauth2,form-data,filesystem}.js` |
 | AWS SigV4 | `ipc/network/awsv4auth-helper.js` | `runner/awsv4auth-helper.js` |
@@ -50,7 +50,7 @@ bugs to the shared logic, not the reporting surface.
 - Import: the app imports Postman, Insomnia, OpenAPI, WSDL and OpenCollection; `bru import`
   (`commands/import.js`) only OpenAPI and WSDL. Changes to a shared converter affect both.
 - **Known-divergent by design.** The CLI has no preferences store (so no `resolveInheritedSettings`),
-  no Electron window, no system-browser OAuth, and no `@usebruno/schema` validation. Its runner
+  no Electron window, no system-browser OAuth, and no `@nats/schema` validation. Its runner
   handles only `REQUEST_ITEM_TYPES = ['http-request', 'graphql-request']`
   (`bruno-cli/src/utils/collection.js`).
 
@@ -66,13 +66,13 @@ hand:
 | App save transform | `bruno-app/src/utils/collections/index.js` — `transformRequestToSaveToFilesystem`, `transform{Collection,Folder}RootToSave`, `transformCollectionToSaveToExportAsFile` | dropped before reaching disk / Bruno JSON export |
 | On-disk formats | `bruno-filestore/src/formats/{bru,yml}` (+ `bruno-lang`) — parse **and** stringify | lost in one format |
 | BRU → YML migration | `bruno-electron/src/ipc/yml-migration.js` (bru parse → yml stringify) | lost when a user migrates |
-| Collection config | `bruno.json` ↔ `opencollection.yml` — `utils/transformBrunoConfig.js`, `stringifyCollection`, migration's config transform (e.g. `transformProxyConfig`), CLI `getCollectionConfig` | config lost or misread by CLI |
+| Collection config | `nats.json` ↔ `opencollection.yml` — `utils/transformBrunoConfig.js`, `stringifyCollection`, migration's config transform (e.g. `transformProxyConfig`), CLI `getCollectionConfig` | config lost or misread by CLI |
 | OpenCollection import/export | `bruno-converters/src/opencollection/items/{http,graphql,grpc,websocket}.ts`, `folder.ts`, `environment.ts` — **both** directions; app entry `bruno-app/src/utils/exporters/opencollection.js` | lost on export or import |
 | Other converters | `postman/{postman-to-bruno,bruno-to-postman}.js`, `insomnia/`, `openapi/`, `wsdl/`; app exporters `postman-collection.js`, `openapi-spec.js`, `bruno-environment.js` | lost on import/export where the target can represent it |
 
 The migration also rewrites content, not just shape: `bru.runRequest("x.bru")` paths are stripped
 of `.bru`, and tab snapshots are remapped. A new script API that takes a file path, a new file
-type, or a new `bruno.json` key needs a matching migration step.
+type, or a new `nats.json` key needs a matching migration step.
 
 ## 3. Scripting API ↔ QuickJS shim
 

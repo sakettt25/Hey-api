@@ -61,7 +61,7 @@ extensions:
     });
   });
 
-  test('Should hide a folder listed in the bruno.json ignore list when the collection is opened', async ({
+  test('Should hide a folder listed in the nats.json ignore list when the collection is opened', async ({
     page,
     electronApp,
     createTmpDir
@@ -71,7 +71,7 @@ extensions:
 
     await test.step('Create a bru collection that ignores the "hidden" folder', async () => {
       fs.writeFileSync(
-        path.join(collectionDir, 'bruno.json'),
+        path.join(collectionDir, 'nats.json'),
         JSON.stringify(
           {
             version: '1',
@@ -86,7 +86,7 @@ extensions:
 
       fs.mkdirSync(path.join(collectionDir, 'hidden'));
       fs.writeFileSync(
-        path.join(collectionDir, 'hidden', 'folder.bru'),
+        path.join(collectionDir, 'hidden', 'folder.nats'),
         `meta {
   name: hidden
   seq: 1
@@ -187,7 +187,7 @@ get {
     const userDataPath = await createTmpDir('config-ignore-sticky-cache-userdata');
     const collectionDir = await createTmpDir('config-ignore-sticky-cache-collection');
     const collectionName = 'Config Ignore Sticky Cache Test';
-    const brunoConfigPath = path.join(collectionDir, 'bruno.json');
+    const brunoConfigPath = path.join(collectionDir, 'nats.json');
 
     fs.writeFileSync(
       path.join(userDataPath, 'preferences.json'),
@@ -220,7 +220,7 @@ get {
     );
     fs.mkdirSync(path.join(collectionDir, 'hidden'));
     fs.writeFileSync(
-      path.join(collectionDir, 'hidden', 'folder.bru'),
+      path.join(collectionDir, 'hidden', 'folder.nats'),
       `meta {
   name: hidden
   seq: 1

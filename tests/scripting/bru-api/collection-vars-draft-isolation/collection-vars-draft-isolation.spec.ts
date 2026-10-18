@@ -13,7 +13,7 @@ test.describe('Collection vars script persistence does not leak draft headers', 
     collectionFixturePath
   }) => {
     const locators = buildCommonLocators(page);
-    const collectionBruPath = path.join(collectionFixturePath!, 'draft-isolation-test', 'collection.bru');
+    const collectionBruPath = path.join(collectionFixturePath!, 'draft-isolation-test', 'collection.nats');
 
     await openCollection(page, 'draft-isolation-test');
     await selectEnvironment(page, 'Test');
@@ -46,14 +46,14 @@ test.describe('Collection vars script persistence does not leak draft headers', 
       await sendRequest(page, 200);
     });
 
-    await test.step('Verify script collection var persisted to collection.bru', async () => {
+    await test.step('Verify script collection var persisted to collection.nats', async () => {
       await expect.poll(() => {
         const content = fs.readFileSync(collectionBruPath, 'utf8');
         return content.includes('scriptVar') && content.includes('from-script');
       }, { timeout: PERSISTENCE_TIMEOUT }).toBe(true);
     });
 
-    await test.step('Verify draft header edit was NOT persisted to collection.bru', async () => {
+    await test.step('Verify draft header edit was NOT persisted to collection.nats', async () => {
       const content = fs.readFileSync(collectionBruPath, 'utf8');
       // The original header value should still be on disk
       expect(content).toContain('X-Custom-Header: original-value');

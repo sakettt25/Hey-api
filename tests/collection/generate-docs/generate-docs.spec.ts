@@ -179,7 +179,7 @@ test.describe('Generate Documentation', () => {
 
     await expect(locators.generateDocs.collectionName()).toHaveText(COLLECTION_NAME);
 
-    // The user-facing collection version (bruno.json `collectionVersion`), not the schema `version`.
+    // The user-facing collection version (nats.json `collectionVersion`), not the schema `version`.
     await expect(locators.generateDocs.versionValue()).toHaveText('Version: 2.5');
 
     // The fixture has 2 folders (Zoo, Aviary) and 5 requests (Lion, Bear, Parrot,

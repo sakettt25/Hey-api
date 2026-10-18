@@ -8,7 +8,7 @@ const COLLECTION_NAME = 'curl-data-binary';
 const INLINE_JSON_CURL = 'curl -H "Content-Type: application/json" --data-binary "{\\"name\\":\\"bruno\\"}" "https://httpbin.org/post"';
 
 // The `@` prefix tells curl to read the body from a file — a genuine file body.
-const FILE_CURL = 'curl -H "Content-Type: application/octet-stream" --data-binary "@/path/to/bruno.json" "https://httpbin.org/post"';
+const FILE_CURL = 'curl -H "Content-Type: application/octet-stream" --data-binary "@/path/to/nats.json" "https://httpbin.org/post"';
 
 test.describe('cURL import — --data-binary', () => {
   test.afterEach(async ({ page }) => {
@@ -42,7 +42,7 @@ test.describe('cURL import — --data-binary', () => {
 
       // File name is shown by basename.
       await expect(request.fileBodyTable()).toBeVisible();
-      await expect(request.fileBodyName()).toContainText('bruno.json');
+      await expect(request.fileBodyName()).toContainText('nats.json');
     });
   });
 });

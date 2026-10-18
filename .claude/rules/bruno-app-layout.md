@@ -1,6 +1,6 @@
 ---
 paths:
-  - "packages/bruno-app/**/*"
+  - "packages/app/**/*"
 ---
 
 # Module & Directory Layout (bruno-app)

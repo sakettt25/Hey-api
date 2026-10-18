@@ -1,13 +1,13 @@
 ---
 paths:
-  - "packages/bruno-app/**"
-  - "packages/bruno-electron/**"
-  - "packages/bruno-cli/**"
-  - "packages/bruno-lang/**"
-  - "packages/bruno-filestore/**"
-  - "packages/bruno-schema/**"
-  - "packages/bruno-schema-types/**"
-  - "packages/bruno-converters/**"
+  - "packages/app/**"
+  - "packages/electron/**"
+  - "packages/cli/**"
+  - "packages/lang/**"
+  - "packages/filestore/**"
+  - "packages/schema/**"
+  - "packages/schema-types/**"
+  - "packages/converters/**"
 ---
 
 # On-Disk DSL & Serialization Changes
@@ -17,16 +17,16 @@ config — as plain-text files on the user's disk and in their Git repos. Two on
 exist:
 
 - **`.bru`** — the Bru DSL. Read/write goes through the **v2 (ohm-js)** grammar in
-  `packages/bruno-lang/v2/src`, via `packages/bruno-filestore/src/formats/bru`
+  `packages/lang/v2/src`, via `packages/filestore/src/formats/bru`
   (`bruToJsonV2` / `jsonToBruV2`). Make all `.bru` changes in v2.
-- **`.yml`** — OpenCollection YAML, handled by `packages/bruno-filestore/src/formats/yml`. This is
-  the current `DEFAULT_COLLECTION_FORMAT` (canonical: `packages/bruno-filestore/src/constants.ts`,
-  duplicated for the renderer in `packages/bruno-app/src/utils/common/constants.js`), so new
+- **`.yml`** — OpenCollection YAML, handled by `packages/filestore/src/formats/yml`. This is
+  the current `DEFAULT_COLLECTION_FORMAT` (canonical: `packages/filestore/src/constants.ts`,
+  duplicated for the renderer in `packages/app/src/utils/common/constants.js`), so new
   collections are `.yml` unless the user chooses otherwise.
-- Plus `bruno.json` (per-collection config, passed through `stringifyCollection`) and `.env` files
+- Plus `nats.json` (per-collection config, passed through `stringifyCollection`) and `.env` files
   (`parseDotEnv` / `dotenvToJson`).
 
-(`packages/bruno-toml` exists but is **orphaned** — imported nowhere outside its own test and on no
+(`packages/toml` exists but is **orphaned** — imported nowhere outside its own test and on no
 serialization path; a DSL change never needs it. `preferences.json` is app-level electron-store
 state under `userData`, not part of a collection's on-disk contract, so it is out of scope here.)
 
@@ -113,7 +113,7 @@ environment Yup schemas are declared `.noUnknown(true).strict()`, and they are v
 **save path** (e.g. `itemSchema.validate` / `environmentSchema.validateSync` in
 `bruno-app`'s `slices/collections/actions.js` and `bruno-electron`'s `store/global-environments.js`).
 A new serialized field that round-trips through filestore but is **not** added to
-`packages/bruno-schema` will throw a validation error on save. `bruno-schema` (runtime Yup) and
+`packages/schema` will throw a validation error on save. `bruno-schema` (runtime Yup) and
 `bruno-schema-types` (TS types) are distinct and both must be updated.
 
 **When a shape must change, migrate on read — never make users edit files.** Add a
@@ -162,7 +162,7 @@ Adding a single field tends to span several packages (a `.bru`-centric change la
 - `bruno-app/src/utils/collections/index.js` — `transformRequestToSaveToFilesystem` and siblings
   whitelist fields before save; a field missing here never reaches the serializer.
 - `bruno-electron/src/ipc/yml-migration.js` — BRU → YML migration (bru parse → yml stringify, plus
-  `bruno.json` → `opencollection.yml` config transforms); verify the field survives migration.
+  `nats.json` → `opencollection.yml` config transforms); verify the field survives migration.
 - the collection utils in `bruno-electron` / `bruno-app` that build the object.
 - Round-trip specs next to the serializers (`formats/yml/parseItem.spec.ts` + `stringifyItem.spec.ts`).
 

@@ -2,7 +2,7 @@ import { test, expect } from '../../../playwright';
 import { openCollectionSettings, focusCollectionSettingsTab, selectCollectionPaneTab } from '../../utils/page';
 
 test.describe('Collection Settings Descriptions - Read', () => {
-  test('reads descriptions from headers and vars in a pre-existing collection.bru', async ({
+  test('reads descriptions from headers and vars in a pre-existing collection.nats', async ({
     pageWithUserData: page
   }) => {
     test.setTimeout(30_000);

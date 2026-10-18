@@ -72,7 +72,7 @@ AGENTS.md
 *.plan.md
 
 # packages dist
-packages/bruno-filestore/dist
-packages/bruno-requests/dist
-packages/bruno-schema-types/dist
-packages/bruno-converters/dist
+packages/filestore/dist
+packages/requests/dist
+packages/schema-types/dist
+packages/converters/dist

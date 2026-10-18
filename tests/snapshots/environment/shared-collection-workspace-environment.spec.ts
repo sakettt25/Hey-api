@@ -34,7 +34,7 @@ test.describe('Snapshot: Shared collection across workspaces restores its own en
     const workspaceBPath = await createTmpDir('snap-shared-col-env-ws-b');
     const sharedCollectionPath = await createTmpDir('snap-shared-col-env-collection');
 
-    fs.writeFileSync(path.join(sharedCollectionPath, 'bruno.json'), JSON.stringify({ version: '1', name: 'SharedCol', type: 'collection' }, null, 2));
+    fs.writeFileSync(path.join(sharedCollectionPath, 'nats.json'), JSON.stringify({ version: '1', name: 'SharedCol', type: 'collection' }, null, 2));
     fs.writeFileSync(path.join(workspaceAPath, 'workspace.yml'), buildWorkspaceYml('Workspace A', sharedCollectionPath));
     fs.writeFileSync(path.join(workspaceBPath, 'workspace.yml'), buildWorkspaceYml('Workspace B', sharedCollectionPath));
 
