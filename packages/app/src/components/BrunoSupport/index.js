@@ -9,13 +9,13 @@ const BrunoSupport = ({ onClose }) => {
       <Modal size="sm" title="Support" handleCancel={onClose} hideFooter={true}>
         <div className="collection-options">
           <div className="mt-2">
-            <a href="https://docs.usebruno.com" target="_blank" className="flex items-end">
+            <a href="https://github.com/sakettt25/Hey-api#readme" target="_blank" className="flex items-end">
               <IconBook size={18} strokeWidth={2} />
               <span className="label ml-2">Documentation</span>
             </a>
           </div>
           <div className="mt-2">
-            <a href="https://github.com/usebruno/bruno/issues" target="_blank" className="flex items-end">
+            <a href="https://github.com/sakettt25/Hey-api/issues" target="_blank" className="flex items-end">
               <IconSpeakerphone size={18} strokeWidth={2} />
               <span className="label ml-2">Report Issues</span>
             </a>
@@ -27,7 +27,7 @@ const BrunoSupport = ({ onClose }) => {
             </a>
           </div>
           <div className="mt-2">
-            <a href="https://github.com/usebruno/bruno" target="_blank" className="flex items-end">
+            <a href="https://github.com/sakettt25/Hey-api" target="_blank" className="flex items-end">
               <IconBrandGithub size={18} strokeWidth={2} />
               <span className="label ml-2">GitHub</span>
             </a>

@@ -205,7 +205,7 @@ const StatusBar = () => {
               <button
                 className="footer-icon-btn"
                 onClick={() => {
-                  window?.ipcRenderer?.openExternal('https://github.com/usebruno/bruno');
+                  window?.ipcRenderer?.openExternal('https://github.com/sakettt25/Hey-api');
                 }}
                 tabIndex={0}
                 aria-label="Open GitHub Repository"

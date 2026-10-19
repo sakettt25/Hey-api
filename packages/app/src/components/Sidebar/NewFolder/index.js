@@ -45,7 +45,7 @@ const NewFolder = ({ collectionUid, item, onClose }) => {
         })
         .test({
           name: 'folderName',
-          message: 'The folder name "environments" at the root of the collection is reserved in bruno',
+          message: 'The folder name "environments" at the root of the collection is reserved in Hey API',
           test: (value) => {
             if (item?.uid) return true;
             return value && !value.trim().toLowerCase().includes('environments');

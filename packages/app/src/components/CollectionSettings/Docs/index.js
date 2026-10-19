@@ -108,6 +108,6 @@ This documentation supports Markdown formatting! You can use:
 - **Bold** and *italic* text
 - \`code blocks\` and syntax highlighting
 - Tables and lists
-- [Links](https://usebruno.com)
+- [Links](https://github.com/sakettt25/Hey-api)
 - And more!
 `;

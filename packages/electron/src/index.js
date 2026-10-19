@@ -362,7 +362,7 @@ app.on('ready', async () => {
 
   ipcMain.handle('renderer:open-about', () => {
     const { version } = require('../package.json');
-    const aboutHeyApi = require('./app/about-bruno');
+    const aboutHeyApi = require('./app/about-heyapi');
     const aboutWindow = new BrowserWindow({
       width: 380,
       height: 280,

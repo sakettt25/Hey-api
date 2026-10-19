@@ -1042,7 +1042,7 @@ const registerRendererEventHandlers = (mainWindow, watcher) => {
         info: {
           type: 'bruno-environment',
           exportedAt: new Date().toISOString(),
-          exportedUsing: `Bruno/v${appVersion}`
+          exportedUsing: `Hey API/v${appVersion}`
         }
       });
 
@@ -1073,7 +1073,7 @@ const registerRendererEventHandlers = (mainWindow, watcher) => {
           info: {
             type: 'bruno-environment',
             exportedAt: new Date().toISOString(),
-            exportedUsing: `Bruno/v${appVersion}`
+            exportedUsing: `Hey API/v${appVersion}`
           },
           environments
         };
@@ -2812,7 +2812,7 @@ const registerMainEventHandlers = (mainWindow) => {
   ipcMain.on('menu:open-collection', triggerOpenCollection);
 
   ipcMain.on('main:open-docs', () => {
-    const docsURL = 'https://docs.usebruno.com';
+    const docsURL = 'https://github.com/sakettt25/Hey-api#readme';
     shell.openExternal(docsURL);
   });
 

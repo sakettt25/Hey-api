@@ -47,7 +47,7 @@ const BETA_FEATURES = [
     description:
       'Generate scripts, tests, and documentation directly from the request tab. Includes contextual chat, scripting autocomplete, and support for OpenAI, Anthropic, and OpenAI-compatible providers using your own API key.',
     action: { label: 'Go to AI settings', tab: 'ai' },
-    docsUrl: 'https://link.usebruno.com/docs/ai'
+    docsUrl: 'https://github.com/sakettt25/Hey-api#readme'
   },
   {
     id: BETA_FEATURE_IDS.FILE_CACHE,
@@ -61,7 +61,7 @@ const BETA_FEATURES = [
     label: 'Akamai EdgeGrid',
     description:
       'Sign requests with the Akamai EdgeGrid authentication scheme. Select it from the Auth type dropdown on any request, folder, or collection.',
-    docsUrl: 'https://link.usebruno.com/docs/auth'
+    docsUrl: 'https://github.com/sakettt25/Hey-api#readme'
   },
   {
     id: BETA_FEATURE_IDS.MOCK_SERVER,
@@ -69,13 +69,13 @@ const BETA_FEATURES = [
     description: 'Run a local mock server using response examples defined in your collection. Serve mock API responses for frontend development without a real backend.',
     toggle: true,
     defaultEnabled: true,
-    docsUrl: 'https://link.usebruno.com/docs/mock-server'
+    docsUrl: 'https://github.com/sakettt25/Hey-api#readme'
   },
   {
     id: BETA_FEATURE_IDS.GRPC_SCRIPTING,
     label: 'gRPC Scripting',
     description: 'Write scripts for gRPC requests. Inspect messages, metadata, and status across the call lifecycle.',
-    docsUrl: 'https://link.usebruno.com/docs/grpc-scripting'
+    docsUrl: 'https://github.com/sakettt25/Hey-api#readme'
   }
 ];
 

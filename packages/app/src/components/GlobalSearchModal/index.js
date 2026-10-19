@@ -61,7 +61,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
 
     // Check for documentation match
     const queryLower = searchTerms.join(' ');
-    if (['documentation', 'docs', 'bruno docs'].some((term) => term.includes(queryLower))) {
+    if (['documentation', 'docs', 'bruno docs', 'hey api docs'].some((term) => term.includes(queryLower))) {
       results.push(DOCUMENTATION_RESULT);
     }
 
@@ -247,7 +247,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     ensureCollectionIsMounted(targetCollection);
 
     if (result.type === SEARCH_TYPES.DOCUMENTATION) {
-      window.open('https://docs.usebruno.com/', '_blank');
+      window.open('https://github.com/sakettt25/Hey-api#readme', '_blank');
       onClose();
       return;
     }

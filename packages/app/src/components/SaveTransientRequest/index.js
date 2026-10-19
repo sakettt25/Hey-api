@@ -499,7 +499,7 @@ const SaveTransientRequest = ({ item: itemProp, collection: collectionProp, isOp
                             Location
                             <Help width={250} placement="top">
                               <p>
-                                Bruno stores your collections on your computer's filesystem.
+                                Hey API stores your collections on your computer's filesystem.
                               </p>
                               <p className="mt-2">
                                 Choose the location where you want to store this collection.
@@ -636,7 +636,7 @@ const SaveTransientRequest = ({ item: itemProp, collection: collectionProp, isOp
                           <div className="new-folder-header">
                             <IconFolder size={16} strokeWidth={1.5} />
                             <label className="new-folder-header-label">
-                              {showFilesystemName ? 'New Folder name (in bruno)' : 'New Folder name'}
+                              {showFilesystemName ? 'New Folder name (in Hey API)' : 'New Folder name'}
                             </label>
                           </div>
                           <div className="new-folder-input-row">

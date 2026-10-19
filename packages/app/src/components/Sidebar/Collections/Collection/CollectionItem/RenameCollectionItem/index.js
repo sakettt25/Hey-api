@@ -51,7 +51,7 @@ const RenameCollectionItem = ({ collectionUid, item, onClose }) => {
           const isValid = validateName(value);
           return isValid ? true : this.createError({ message: validateNameError(value) });
         })
-        .test('not-reserved', `The file names "collection" and "folder" are reserved in bruno`, (value) => !['collection', 'folder'].includes(value))
+        .test('not-reserved', `The file names "collection" and "folder" are reserved in Hey API`, (value) => !['collection', 'folder'].includes(value))
     }),
     onSubmit: async (values) => {
       // if there is unsaved changes in the request,
@@ -150,7 +150,7 @@ const RenameCollectionItem = ({ collectionUid, item, onClose }) => {
                     ) : (
                       <Help width="300">
                         <p>
-                          Bruno saves each request as a file in your collection's folder.
+                          Hey API saves each request as a file in your collection's folder.
                         </p>
                         <p className="mt-2">
                           You can choose a file name different from your request's name or one compatible with filesystem rules.

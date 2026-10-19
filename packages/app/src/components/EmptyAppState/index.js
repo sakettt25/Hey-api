@@ -3,7 +3,7 @@ import { IconAppWindow } from '@tabler/icons';
 import Button from 'ui/Button';
 import StyledWrapper from './StyledWrapper';
 
-const APPS_DOCS_URL = 'https://link.usebruno.com/apps';
+const APPS_DOCS_URL = 'https://github.com/sakettt25/Hey-api#readme';
 
 const EmptyAppState = ({ title = 'No app yet', hint, onAddCode }) => {
   const openAppsDocs = useCallback(() => {

@@ -10,8 +10,10 @@ const posixifyPath = (p) => (p ? p.replace(/\\/g, '/') : p);
 
 const WORKSPACE_TYPE = 'workspace';
 const OPENCOLLECTION_VERSION = '1.0.0';
-const GITIGNORE_MANAGED_BLOCK_START = '# Bruno managed collection remotes';
-const GITIGNORE_MANAGED_BLOCK_END = '# End Bruno managed collection remotes';
+const GITIGNORE_MANAGED_BLOCK_START = '# Hey API managed collection remotes';
+const GITIGNORE_MANAGED_BLOCK_END = '# End Hey API managed collection remotes';
+const LEGACY_GITIGNORE_MANAGED_BLOCK_START = '# Bruno managed collection remotes';
+const LEGACY_GITIGNORE_MANAGED_BLOCK_END = '# End Bruno managed collection remotes';
 
 const quoteYamlValue = (value) => {
   if (typeof value !== 'string') {
@@ -379,11 +381,17 @@ const getCollectionGitignoreEntry = (workspacePath, collectionPath) => {
 };
 
 const findGitignoreManagedBlock = (lines) => {
-  const start = lines.findIndex((line) => line.trim() === GITIGNORE_MANAGED_BLOCK_START);
-  if (start === -1) return null;
-
-  const end = lines.findIndex((line, index) => index > start && line.trim() === GITIGNORE_MANAGED_BLOCK_END);
-  if (end === -1) return null;
+  let start = lines.findIndex((line) => line.trim() === GITIGNORE_MANAGED_BLOCK_START);
+  let end = -1;
+  if (start !== -1) {
+    end = lines.findIndex((line, index) => index > start && line.trim() === GITIGNORE_MANAGED_BLOCK_END);
+  } else {
+    start = lines.findIndex((line) => line.trim() === LEGACY_GITIGNORE_MANAGED_BLOCK_START);
+    if (start !== -1) {
+      end = lines.findIndex((line, index) => index > start && line.trim() === LEGACY_GITIGNORE_MANAGED_BLOCK_END);
+    }
+  }
+  if (start === -1 || end === -1) return null;
 
   return { start, end };
 };

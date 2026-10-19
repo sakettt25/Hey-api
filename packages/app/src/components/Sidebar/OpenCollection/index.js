@@ -75,9 +75,9 @@ const OpenCollectionModal = ({ onClose }) => {
           if (failedScans.length) {
             toast.error(`Failed to scan ${failedScans.length} folder${failedScans.length === 1 ? '' : 's'} for collections`);
           } else if (skippedItems.length) {
-            toast.error(`No Bruno collections found. ${skippedItems.length} skipped, config could not be read`);
+            toast.error(`No Hey API collections found. ${skippedItems.length} skipped, config could not be read`);
           } else {
-            toast.error('No Bruno collections found. Couldn\'t find a nats.json or opencollection.yml');
+            toast.error('No Hey API collections found. Couldn\'t find a nats.json or opencollection.yml');
           }
           onClose();
           return;
